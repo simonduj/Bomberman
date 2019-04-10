@@ -1,9 +1,37 @@
 # ----------------------------
-# group nb XXX
-# noma1 : name1 surname1
-# noma2 : name2 surname2
+# group nb 40
+# noma1 : name1 Antoine Grollinger
+# noma2 : name2 Simon Dujardin
 # ----------------------------
 
-# TODO complete the header with your group number, your noma's and full names
+ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
+ozengine = /Applications/Mozart2.app/Contents/Resources/bin/ozengine
 
-# TODO write your makefile here
+all : Input.ozf PlayerManager.ozf Players.ozf GUI.ozf Main.ozf Run.ozf
+
+compile : PlayerManager.ozf Players.ozf GUI.ozf Main.ozf
+
+compilePlayers : Players.ozf
+
+run : Run.ozf
+
+clean : 
+	rm *.ozf
+
+Input.ozf : 
+	$(ozc) -c Input.oz
+
+PlayerManager.ozf : 
+	$(ozc) -c PlayerManager.oz
+
+Players.ozf : 
+	$(ozc) -c Player000name.oz 
+
+GUI.ozf : 
+	$(ozc) -c GUI.oz 
+
+Main.ozf : 
+	$(ozc) -c Main.oz
+
+Run.ozf : 
+	$(ozengine) Main.ozf
