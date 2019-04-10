@@ -7,9 +7,22 @@ import
 define
    Port
    Window
+   Players
+   CreatePlayers
+   NbPlayers
+   Z
+   PlayerList
+   ID
 in
    %% Implement your controller here
-   Port = {GUI.portWindow}
-   {GUI.buildWindow Port}
-   {Browser.browse Port}
+   NbPlayers = Input.nbBombers
+   %Port = {GUI.portWindow}
+   Port = {GUI.buildWindow}
+   Players = Input.bombers
+   fun{CreatePlayers N}
+    if N == 0 then nil
+    else {PlayerManager.playerGenerator {Nth Players N} {GUI.initPlayer Port N}}|{CreatePlayers N-1} end
+  end
+  {CreatePlayers NbPlayers ID}
+  {Browser.browse ID}
 end

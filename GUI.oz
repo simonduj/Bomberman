@@ -7,6 +7,8 @@ import
 export
    portWindow:StartWindow
    buildWindow:BuildWindow
+   initPlayer:InitPlayer
+   spawnPlayer:spawnPlayer
 define
    
    StartWindow
