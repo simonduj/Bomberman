@@ -7,7 +7,7 @@
 ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
 ozengine = /Applications/Mozart2.app/Contents/Resources/bin/ozengine
 
-all : Input.ozf PlayerManager.ozf Players.ozf GUI.ozf Main.ozf Run.ozf
+all : Input.ozf PlayerManager.ozf GUI.ozf Main.ozf Run.ozf
 
 compile : PlayerManager.ozf Players.ozf GUI.ozf Main.ozf
 
