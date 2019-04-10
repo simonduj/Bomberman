@@ -1,24 +1,25 @@
 # ----------------------------
 # group nb 40
-# noma1 : name1 Antoine Grollinger
-# noma2 : name2 Simon Dujardin
+# 12431600 : Grollinger Antoine
+# noma2 : Dujardin Simon
 # ----------------------------
 
 ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
 ozengine = /Applications/Mozart2.app/Contents/Resources/bin/ozengine
 
-all : Input.ozf PlayerManager.ozf GUI.ozf Main.ozf Run.ozf
+all : Input.ozf PlayerManager.ozf GUI.ozf Main.ozf run
 
 compile : PlayerManager.ozf Players.ozf GUI.ozf Main.ozf
 
 compilePlayers : Players.ozf
 
-run : Run.ozf
-
 clean : 
-	mkdir tmp && mv Player000bomber.ozf tmp
+	mkdir tmp && mv Player000bomber.ozf Projet2019util.ozf tmp
 	rm *.ozf
 	mv tmp/* . && rm -rf tmp
+
+cleanMain :
+	rm Main.ozf
 
 Input.ozf : 
 	$(ozc) -c Input.oz
@@ -35,5 +36,5 @@ GUI.ozf :
 Main.ozf : 
 	$(ozc) -c Main.oz
 
-Run.ozf : 
+run : 
 	$(ozengine) Main.ozf

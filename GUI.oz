@@ -6,6 +6,7 @@ import
    Projet2019util
 export
    portWindow:StartWindow
+   buildWindow:BuildWindow
 define
    
    StartWindow
