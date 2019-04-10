@@ -16,7 +16,9 @@ compilePlayers : Players.ozf
 run : Run.ozf
 
 clean : 
+	mkdir tmp && mv Player000bomber.ozf tmp
 	rm *.ozf
+	mv tmp/* . && rm -rf tmp
 
 Input.ozf : 
 	$(ozc) -c Input.oz
