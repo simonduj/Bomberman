@@ -5,24 +5,31 @@ import
    PlayerManager
    Browser
 define
-   Port
-   Window
+   Grid
    Players
-   CreatePlayers
    NbPlayers
-   Z
-   PlayerList
    ID
+   Player
+   Bomber
+   Colors
+   Player2
+   ID2
+   Bomber2
 in
    %% Implement your controller here
+   Colors = Input.colorsBombers
    NbPlayers = Input.nbBombers
-   %Port = {GUI.portWindow}
-   Port = {GUI.buildWindow}
+   Grid = {GUI.buildWindow}
    Players = Input.bombers
-   fun{CreatePlayers N}
-    if N == 0 then nil
-    else {PlayerManager.playerGenerator {Nth Players N} {GUI.initPlayer Port N}}|{CreatePlayers N-1} end
-  end
-  {CreatePlayers NbPlayers ID}
-  {Browser.browse ID}
+
+   ID = bomber(id:1 color:red name:'Antoine')
+   ID2 = bomber(id:2 color:red name:'Antoine')
+
+   Player = {PlayerManager.playerGenerator {Nth Players 1} ID}
+   Player2 = {PlayerManager.playerGenerator {Nth Players 2} ID2}
+
+   Bomber = {GUI.initPlayer Grid ID}
+   Bomber2 = {GUI.initPlayer Grid ID2}
+   %{GUI.spawnPlayer Grid Player 4 2}
+   %{Browser.browse ID}
 end

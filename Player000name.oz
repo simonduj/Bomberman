@@ -5,6 +5,7 @@ import
    Projet2019util
 export
    portPlayer:StartPlayer
+   OutputStream
 define   
    StartPlayer
    TreatStream

@@ -8,7 +8,7 @@ export
    portWindow:StartWindow
    buildWindow:BuildWindow
    initPlayer:InitPlayer
-   spawnPlayer:spawnPlayer
+   spawnPlayer: Spawn
 define
    
    StartWindow
