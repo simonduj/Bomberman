@@ -29,6 +29,9 @@ clean :
 	rm *.ozf
 	mv tmp/* . && rm -rf tmp
 
+cleanMain :
+	rm Main.ozf
+
 else
 
 ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
