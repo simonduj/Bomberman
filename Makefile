@@ -1,16 +1,15 @@
 # ----------------------------
-# group nb 99
-# noma1 : Liliya Semerikova
-# 24601600 : Gildas Mulders
+# group nb 40
+# 12431600 : Grollinger Antoine
+# 57521400 : Dujardin Simon
 # ----------------------------
 
-# TODO complete the header with your group number, your noma's and full names
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 
-all : clean main 
+all : Input.ozf PlayerManager.ozf GUI.ozf Main.ozf run
 
-main : Main.ozf 
+run : Main.ozf 
 	ozengine Main.ozf
 
 Main.ozf : Main.oz GUI.ozf Input.ozf PlayerManager.ozf
@@ -26,28 +25,45 @@ PlayerManager.ozf : PlayerManager.oz
 	ozc -c PlayerManager.oz
 
 clean : 
-	@rm -f Main.ozf GUI.ozf Input.ozf PlayerManager.ozf
+	mkdir tmp && mv Player000bomber.ozf Projet2019util.ozf tmp
+	rm *.ozf
+	mv tmp/* . && rm -rf tmp
 
 else
 
-all : clean main 
+ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
+ozengine = /Applications/Mozart2.app/Contents/Resources/bin/ozengine
 
-main : Main.ozf 
-	../../../../Applications/Mozart2.app/Contents/Resources/bin/ozengine Main.ozf
+all : Input.ozf PlayerManager.ozf GUI.ozf Main.ozf run
 
-Main.ozf : Main.oz GUI.ozf Input.ozf PlayerManager.ozf
-	../../../../Applications/Mozart2.app/Contents/Resources/bin/ozc -c Main.oz
+compile : PlayerManager.ozf Players.ozf GUI.ozf Main.ozf
 
-GUI.ozf : GUI.oz
-	../../../../Applications/Mozart2.app/Contents/Resources/bin/ozc -c GUI.oz
-
-Input.ozf : Input.oz
-	../../../../Applications/Mozart2.app/Contents/Resources/bin/ozc -c Input.oz
-
-PlayerManager.ozf : PlayerManager.oz
-	../../../../Applications/Mozart2.app/Contents/Resources/bin/ozc -c PlayerManager.oz
+compilePlayers : Players.ozf
 
 clean : 
-	@rm -f Main.ozf GUI.ozf Input.ozf PlayerManager.ozf
+	mkdir tmp && mv Player000bomber.ozf Projet2019util.ozf tmp
+	rm *.ozf
+	mv tmp/* . && rm -rf tmp
+
+cleanMain :
+	rm Main.ozf
+
+Input.ozf : 
+	$(ozc) -c Input.oz
+
+PlayerManager.ozf : 
+	$(ozc) -c PlayerManager.oz
+
+Players.ozf : 
+	$(ozc) -c Player000name.oz 
+
+GUI.ozf : 
+	$(ozc) -c GUI.oz 
+
+Main.ozf : 
+	$(ozc) -c Main.oz
+
+run : 
+	$(ozengine) Main.ozf
 
 endif
