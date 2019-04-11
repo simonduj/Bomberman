@@ -1,7 +1,7 @@
 # ----------------------------
 # group nb 40
 # 12431600 : Grollinger Antoine
-# noma2 : Dujardin Simon
+# 57521400 : Dujardin Simon
 # ----------------------------
 
 ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
