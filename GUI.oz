@@ -8,7 +8,8 @@ export
    portWindow:StartWindow
    buildWindow:BuildWindow
    initPlayer:InitPlayer
-   spawnPlayer: Spawn
+   spawn: Spawn
+   treat:TreatStream
 define
    
    StartWindow
@@ -254,7 +255,7 @@ in
    end
 
    proc{TreatStream Stream Grid Players}
-      {Browser.browse Stream.1}
+      %{Browser.browse Stream.1}
       case Stream
       of nil then skip
       [] H|T then
@@ -282,7 +283,7 @@ in
             {TreatStream T Grid Players}
          [] spawnBonus(Pos) then
             {ApplyTo Grid Pos bonus Spawn}
-	    {TreatStream T Grid Players}
+	         {TreatStream T Grid Players}
          [] hideBonus(Pos) then
             {ApplyTo Grid Pos bonus Hide}
 	    {TreatStream T Grid Players}
@@ -313,6 +314,7 @@ in
 	    {Browser.browse 'unsupported message'#H}
 	    {TreatStream T Grid Players}
          end
+         else skip
       end
    end
    

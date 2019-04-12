@@ -4,6 +4,36 @@
 # 57521400 : Dujardin Simon
 # ----------------------------
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+
+all : Input.ozf PlayerManager.ozf GUI.ozf Main.ozf run
+
+run : Main.ozf 
+	ozengine Main.ozf
+
+Main.ozf : Main.oz GUI.ozf Input.ozf PlayerManager.ozf
+	ozc -c Main.oz
+
+GUI.ozf : GUI.oz
+	ozc -c GUI.oz
+
+Input.ozf : Input.oz
+	ozc -c Input.oz
+
+PlayerManager.ozf : PlayerManager.oz
+	ozc -c PlayerManager.oz
+
+clean : 
+	mkdir tmp && mv Player000bomber.ozf Projet2019util.ozf tmp
+	rm *.ozf
+	mv tmp/* . && rm -rf tmp
+
+cleanMain :
+	rm Main.ozf
+
+else
+
 ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
 ozengine = /Applications/Mozart2.app/Contents/Resources/bin/ozengine
 
@@ -38,3 +68,5 @@ Main.ozf :
 
 run : 
 	$(ozengine) Main.ozf
+
+endif
