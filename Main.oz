@@ -47,17 +47,20 @@ in
    {Send Player2Port assignSpawn(pt(x:12 y:6))}
    {Send PlayerPort spawn(T P)}
    {Send Player2Port spawn(T2 P2)}
+   {Send Player2Port info(spawnPlayer(T P))}
+   {Send PlayerPort info(spawnPlayer(T2 P2))}
    {Send BoardPort spawnPlayer(ID P)}
    {Send BoardPort spawnPlayer(ID2 P2)}
 
-   for I in 1..20 do
-      {Time.delay 500}%Just to see the dynamic
+   for I in 1..1000 do %1000 turn (500 for each player)
+      {Time.delay 100}%Just to see the dynamic
       local ID Action in 
          %The first player play
          if I mod 2 == 0 then % Alternate on Player1 and Player2
             {Send PlayerPort doaction(ID Action)}
             case Action 
                of move(Pos) then {Send BoardPort movePlayer(ID Pos)}
+                                 {Send Player2Port info(movePlayer(ID Pos))}
                [] bomb(Pos) then skip %DO SOMETHING FOR THAT
             end
          %The second player play   
@@ -65,6 +68,7 @@ in
             {Send Player2Port doaction(ID Action)}
             case Action
                of move(Pos) then {Send BoardPort movePlayer(ID Pos)}
+                                 {Send PlayerPort info(movePlayer(ID Pos))}
                [] bomb(Pos) then skip %DO SOMETHING FOR THAT
             end 
          end 
