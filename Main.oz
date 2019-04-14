@@ -7,7 +7,9 @@ import
 export
    turnByTurn:TurnByTurn
    simultaneous:Simultaneous
+   treatBomb:TreatBomb
 define
+   TreatBomb
    TurnByTurn
    Simultaneous
    Grid
@@ -52,7 +54,7 @@ in
    {Send BoardPort spawnPlayer(ID P)}
    {Send BoardPort spawnPlayer(ID2 P2)}
 
-   for I in 1..1000 do %1000 turn (500 for each player)
+   for I in 1..1000 do %1000 turn /!\ SHOULD BE REPLACED BY CONDITION ABOUT END OF THE GAME
       {Time.delay 100}%Just to see the dynamic
       local ID Action in 
          %The first player play
@@ -61,7 +63,7 @@ in
             case Action 
                of move(Pos) then {Send BoardPort movePlayer(ID Pos)}
                                  {Send Player2Port info(movePlayer(ID Pos))}
-               [] bomb(Pos) then skip %DO SOMETHING FOR THAT
+               [] bomb(Pos) then {Send BoardPort spawnFire(Pos)}
             end
          %The second player play   
          else
@@ -69,18 +71,18 @@ in
             case Action
                of move(Pos) then {Send BoardPort movePlayer(ID Pos)}
                                  {Send PlayerPort info(movePlayer(ID Pos))}
-               [] bomb(Pos) then skip %DO SOMETHING FOR THAT
+               [] bomb(Pos) then {Send BoardPort spawnFire(Pos)}
             end 
          end 
       end 
    end 
 
    proc{TurnByTurn A}
-      A=true % A is here just to avoid compilation error, this is considered as empty
-      
+      skip
    end 
 
    proc{Simultaneous A}
-      A=true % A is here just to avoid compilation error, this is considered as empty
+      skip
    end 
+
 end
