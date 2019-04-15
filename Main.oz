@@ -99,7 +99,7 @@ in
       local NEXT in
       if R == 0 then skip 
       elseif D == 0 then
-         NEXT = {GetValue Input.map Pos.x Pos.y+1}
+         NEXT = {GetValue Input.map Pos.y+1 Pos.x}
          %PROPAGATE NORTH
          if NEXT==1 then
             skip
@@ -115,7 +115,7 @@ in
             {FirePropAux pt(x:Pos.x y:Pos.y+1) 0 R-1}
          end 
       elseif D == 1 then
-         NEXT = {GetValue Input.map Pos.x+1 Pos.y}
+         NEXT = {GetValue Input.map Pos.y Pos.x+1}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
@@ -130,7 +130,7 @@ in
             {FirePropAux pt(x:Pos.x+1 y:Pos.y) 1 R-1}
          end 
       elseif D == 2 then
-         NEXT = {GetValue Input.map Pos.x Pos.y-1}
+         NEXT = {GetValue Input.map Pos.y-1 Pos.x}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
@@ -145,7 +145,7 @@ in
             {FirePropAux pt(x:Pos.x y:Pos.y-1) 2 R-1}
          end 
       else
-         NEXT = {GetValue Input.map Pos.x-1 Pos.y}
+         NEXT = {GetValue Input.map Pos.y Pos.x-1}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
