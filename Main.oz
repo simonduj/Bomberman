@@ -99,7 +99,7 @@ in
       local NEXT in
       if R == 0 then skip 
       elseif D == 0 then
-         NEXT = {GetValue Input.map Pos.x+1 Pos.y}
+         NEXT = {GetValue Input.map Pos.x Pos.y+1}
          %PROPAGATE NORTH
          if NEXT==1 then
             skip
@@ -111,11 +111,11 @@ in
             skip
             %DEAL WITH BONUS BOX
          else 
-            {Send BoardPort spawnFire(pt(x:Pos.x+1 y:Pos.y))}
-            {FirePropAux pt(x:Pos.x+1 y:Pos.y) 0 R-1}
+            {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y+1))}
+            {FirePropAux pt(x:Pos.x y:Pos.y+1) 0 R-1}
          end 
       elseif D == 1 then
-         NEXT = {GetValue Input.map Pos.x Pos.y+1}
+         NEXT = {GetValue Input.map Pos.x+1 Pos.y}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
@@ -126,25 +126,10 @@ in
             skip
             %DEAL WITH BONUS BOX
          else
-            {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y+1))}
-            {FirePropAux pt(x:Pos.x y:Pos.y+1) 1 R-1}
+            {Send BoardPort spawnFire(pt(x:Pos.x+1 y:Pos.y))}
+            {FirePropAux pt(x:Pos.x+1 y:Pos.y) 1 R-1}
          end 
       elseif D == 2 then
-         NEXT = {GetValue Input.map Pos.x-1 Pos.y}
-         if NEXT==1 then
-            skip
-            %STOP PROPAGATING
-         elseif NEXT==2 then
-            skip
-            %DEAL WITH POINT BOX
-         elseif NEXT==3 then
-            skip
-            %DEAL WITH BONUS BOX
-         else
-            {Send BoardPort spawnFire(pt(x:Pos.x-1 y:Pos.y))}
-            {FirePropAux pt(x:Pos.x-1 y:Pos.y) 2 R-1}
-         end 
-      else
          NEXT = {GetValue Input.map Pos.x Pos.y-1}
          if NEXT==1 then
             skip
@@ -157,13 +142,29 @@ in
             %DEAL WITH BONUS BOX
          else
             {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y-1))}
-            {FirePropAux pt(x:Pos.x y:Pos.y-1) 3 R-1}
+            {FirePropAux pt(x:Pos.x y:Pos.y-1) 2 R-1}
+         end 
+      else
+         NEXT = {GetValue Input.map Pos.x-1 Pos.y}
+         if NEXT==1 then
+            skip
+            %STOP PROPAGATING
+         elseif NEXT==2 then
+            skip
+            %DEAL WITH POINT BOX
+         elseif NEXT==3 then
+            skip
+            %DEAL WITH BONUS BOX
+         else
+            {Send BoardPort spawnFire(pt(x:Pos.x-1 y:Pos.y))}
+            {FirePropAux pt(x:Pos.x-1 y:Pos.y) 3 R-1}
          end 
       end 
       end
    end 
 
    {InitGame}
+   {Time.delay 2500} %Waiting for the board to be full screened
 
    for I in 1..1000 do %1000 turn /!\ SHOULD BE REPLACED BY CONDITION ABOUT END OF THE GAME
       {Time.delay 250}%Just to see the dynamic
@@ -188,8 +189,7 @@ in
                   {Send PlayerPort info(movePlayer(ID Pos))}
                [] bomb(Pos) then 
                   %Fire's propagation
-                  %{FireProp Pos}
-                  skip
+                  {FireProp Pos} 
             end 
          end 
       end 
