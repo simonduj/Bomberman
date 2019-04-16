@@ -1,5 +1,6 @@
 functor
 import
+   Array
    GUI
    Input
    PlayerManager
@@ -12,7 +13,10 @@ export
    initGame:InitGame
    getValue:GetValue
 define
-   GetVal
+   NewUnboundedList
+   NewUnboundedMap
+   CheckPos
+   GetNextValue
    NextPos
    FirePropAux
    GetValueAux
@@ -50,6 +54,19 @@ in
    proc{Simultaneous A}
       skip
    end 
+   fun{NewUnboundedMap X Y}
+      if X==0 then nil
+      else
+         {NewUnboundedList Y}|{NewUnboundedMap X-1 Y}
+      end
+   end
+
+   fun{NewUnboundedList Y}
+      if Y==0 then nil
+      else
+         _|{NewUnboundedList Y-1}
+      end
+   end
    fun{GetValueAux L Y}
       if Y == 1 then L.1
       else
@@ -62,7 +79,7 @@ in
          {GetValue M.2 X-1 Y}
       end
    end
-   fun{GetVal Pos D}
+   fun{GetNextValue Pos D}
       if D==0 then {GetValue Input.map Pos.y+1 Pos.x}
       elseif D==1 then {GetValue Input.map Pos.y Pos.x+1}
       elseif D==2 then {GetValue Input.map Pos.y-1 Pos.x}
@@ -77,6 +94,16 @@ in
       else pt(x:Pos.x-1 y:Pos.y)
       end 
    end 
+   proc{CheckPos Pos ID P}
+      %HOW TO NOT COUNT MORE THAN 1 TIME THE POINT/BONUS
+      local R in
+      if {GetValue Input.map Pos.y Pos.x} == 2 then
+         {Send P add(point 1 R)}
+         {Send BoardPort hidePoint(Pos)}
+         {Send BoardPort scoreUpdate(ID R)}
+      end 
+      end 
+   end 
    proc{InitGame}
       %% Implement your controller here
       Colors = Input.colorsBombers
@@ -84,6 +111,7 @@ in
       %Grid = {GUI.buildWindow}
       Players = Input.bombers
 
+      
 
       ID = bomber(id:1 color:Colors.1 name:'Antoine')
       ID2 = bomber(id:2 color:red name:'Simon')
@@ -127,7 +155,7 @@ in
       local NEXT in
       if R == 0 then skip 
       else
-         NEXT = {GetVal Pos D}
+         NEXT = {GetNextValue Pos D}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
@@ -170,6 +198,7 @@ in
                of move(Pos) then 
                   {Send BoardPort movePlayer(ID Pos)}
                   {Send Player2Port info(movePlayer(ID Pos))}
+                  {CheckPos Pos ID PlayerPort}
                [] bomb(Pos) then 
                   {Send BoardPort spawnBomb(Pos)}
                   {Send Player2Port info(bombPlanted(Pos))}
@@ -181,6 +210,7 @@ in
                of move(Pos) then 
                   {Send BoardPort movePlayer(ID Pos)}
                   {Send PlayerPort info(movePlayer(ID Pos))}
+                  {CheckPos Pos ID2 Player2Port}
                [] bomb(Pos) then 
                   {Send BoardPort spawnBomb(Pos)}
                   {Send PlayerPort info(bombPlanted(Pos))}
