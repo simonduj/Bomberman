@@ -105,11 +105,16 @@ in
             skip
             %STOP PROPAGATING
          elseif NEXT==2 then
-            skip
-            %DEAL WITH POINT BOX
+            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y+1))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            {Send BoardPort spawnPoint(pt(x:Pos.x y:Pos.y+1))}
          elseif NEXT==3 then
             skip
-            %DEAL WITH BONUS BOX
+            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y+1))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            {Send BoardPort spawnBonus(pt(x:Pos.x y:Pos.y+1))}
          else 
             {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y+1))}
             {FirePropAux pt(x:Pos.x y:Pos.y+1) 0 R-1}
@@ -120,11 +125,15 @@ in
             skip
             %STOP PROPAGATING
          elseif NEXT==2 then
-            skip
-            %DEAL WITH POINT BOX
+            {Send BoardPort hideBox(pt(x:Pos.x+1 y:Pos.y))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
+            {Send BoardPort spawnPoint(pt(x:Pos.x+1 y:Pos.y))}
          elseif NEXT==3 then
-            skip
-            %DEAL WITH BONUS BOX
+            {Send BoardPort hideBox(pt(x:Pos.x+1 y:Pos.y))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
+            {Send BoardPort spawnBonus(pt(x:Pos.x+1 y:Pos.y))}
          else
             {Send BoardPort spawnFire(pt(x:Pos.x+1 y:Pos.y))}
             {FirePropAux pt(x:Pos.x+1 y:Pos.y) 1 R-1}
@@ -135,11 +144,16 @@ in
             skip
             %STOP PROPAGATING
          elseif NEXT==2 then
-            skip
-            %DEAL WITH POINT BOX
+            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y-1))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
+            {Send BoardPort spawnPoint(pt(x:Pos.x y:Pos.y-1))}
          elseif NEXT==3 then
             skip
-            %DEAL WITH BONUS BOX
+            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y-1))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
+            {Send BoardPort spawnBonus(pt(x:Pos.x y:Pos.y-1))}
          else
             {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y-1))}
             {FirePropAux pt(x:Pos.x y:Pos.y-1) 2 R-1}
@@ -150,11 +164,16 @@ in
             skip
             %STOP PROPAGATING
          elseif NEXT==2 then
-            skip
-            %DEAL WITH POINT BOX
+            {Send BoardPort hideBox(pt(x:Pos.x-1 y:Pos.y))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
+            {Send BoardPort spawnPoint(pt(x:Pos.x-1 y:Pos.y))}
          elseif NEXT==3 then
             skip
-            %DEAL WITH BONUS BOX
+            {Send BoardPort hideBox(pt(x:Pos.x-1 y:Pos.y))}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
+            {Send BoardPort spawnBonus(pt(x:Pos.x-1 y:Pos.y))}
          else
             {Send BoardPort spawnFire(pt(x:Pos.x-1 y:Pos.y))}
             {FirePropAux pt(x:Pos.x-1 y:Pos.y) 3 R-1}
