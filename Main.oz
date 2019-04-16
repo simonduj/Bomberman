@@ -106,14 +106,17 @@ in
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
    end  
-   proc{FireProp Pos}
+   proc{FireProp Pos P}
+      local R in 
       {Send PlayerPort info(bombExploded(Pos))}
       {Send Player2Port info(bombExploded(Pos))}
       {Send BoardPort spawnFire(Pos)} %first spawnFire where the bomb was dropped
+      {Send P add(bomb 1 R)}
       {FirePropAux Pos 0 Input.fire}
       {FirePropAux Pos 1 Input.fire}
       {FirePropAux Pos 2 Input.fire}
       {FirePropAux Pos 3 Input.fire}
+      end 
    end 
    %Proc for propagating fire with :
    %Pos : Pos where bomb exploded
@@ -169,9 +172,8 @@ in
                   {Send Player2Port info(movePlayer(ID Pos))}
                [] bomb(Pos) then 
                   {Send BoardPort spawnBomb(Pos)}
-                  {Time.delay 1000}
                   {Send Player2Port info(bombPlanted(Pos))}
-                  {FireProp Pos}
+                  thread {Time.delay 2000} {FireProp Pos PlayerPort} end%Simulate the waiting TO DO
             end   
          else
             {Send Player2Port doaction(ID Action)}
@@ -181,9 +183,8 @@ in
                   {Send PlayerPort info(movePlayer(ID Pos))}
                [] bomb(Pos) then 
                   {Send BoardPort spawnBomb(Pos)}
-                  {Time.delay 1000}
                   {Send PlayerPort info(bombPlanted(Pos))}
-                  {FireProp Pos} 
+                  thread {Time.delay 2000} {FireProp Pos Player2Port} end%Simulate the waiting TO DO 
             end 
          end 
       end 
