@@ -107,6 +107,8 @@ in
       {Send BoardPort spawnPlayer(ID2 P2)}
    end  
    proc{FireProp Pos}
+      {Send PlayerPort info(bombExploded(Pos))}
+      {Send Player2Port info(bombExploded(Pos))}
       {Send BoardPort spawnFire(Pos)} %first spawnFire where the bomb was dropped
       {FirePropAux Pos 0 Input.fire}
       {FirePropAux Pos 1 Input.fire}
@@ -128,14 +130,14 @@ in
             %STOP PROPAGATING
          elseif NEXT==2 then
             {Send BoardPort hideBox({NextPos Pos D})}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            {Send PlayerPort info(boxRemoved({NextPos Pos D}))}
+            {Send Player2Port info(boxRemoved({NextPos Pos D}))}
             {Send BoardPort spawnPoint({NextPos Pos D})}
          elseif NEXT==3 then
             skip
             {Send BoardPort hideBox({NextPos Pos D})}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            {Send PlayerPort info(boxRemoved({NextPos Pos D}))}
+            {Send Player2Port info(boxRemoved({NextPos Pos D}))}
             {Send BoardPort spawnBonus({NextPos Pos D})}
          else 
             {Send BoardPort spawnFire({NextPos Pos D})}
@@ -150,16 +152,15 @@ in
    %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
    %---------------------------GAME---------------------------
    %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
-   
+
 
 
    {InitGame}
-   {Time.delay 2500} %Waiting for the board to be full screened
+   {Time.delay 1500} %Waiting for the board to be full screened
 
    for I in 1..1000 do %1000 turn /!\ SHOULD BE REPLACED BY CONDITION ABOUT END OF THE GAME
       {Time.delay 250}%Just to see the dynamic
       local ID Action in 
-         %The first player play
          if I mod 2 == 0 then % Alternate on Player1 and Player2
             {Send PlayerPort doaction(ID Action)}
             case Action 
@@ -167,10 +168,11 @@ in
                   {Send BoardPort movePlayer(ID Pos)}
                   {Send Player2Port info(movePlayer(ID Pos))}
                [] bomb(Pos) then 
-                  %Fire's propagation
+                  {Send BoardPort spawnBomb(Pos)}
+                  {Time.delay 1000}
+                  {Send Player2Port info(bombPlanted(Pos))}
                   {FireProp Pos}
-            end
-         %The second player play   
+            end   
          else
             {Send Player2Port doaction(ID Action)}
             case Action
@@ -178,7 +180,9 @@ in
                   {Send BoardPort movePlayer(ID Pos)}
                   {Send PlayerPort info(movePlayer(ID Pos))}
                [] bomb(Pos) then 
-                  %Fire's propagation
+                  {Send BoardPort spawnBomb(Pos)}
+                  {Time.delay 1000}
+                  {Send PlayerPort info(bombPlanted(Pos))}
                   {FireProp Pos} 
             end 
          end 
