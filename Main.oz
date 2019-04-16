@@ -12,7 +12,6 @@ export
    initGame:InitGame
    getValue:GetValue
 define
-   FirePropAux2
    GetVal
    NextPos
    FirePropAux
@@ -37,7 +36,13 @@ define
    BoardPort
    T P T2 P2
 in
-   %%%%% HELPER %%%%%
+
+
+   %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
+   %--------------------------HELPER--------------------------
+   %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
+
+
    proc{TurnByTurn A}
       skip
    end 
@@ -138,7 +143,15 @@ in
          end 
       end
       end
-   end 
+   end   
+
+
+
+   %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
+   %---------------------------GAME---------------------------
+   %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
+   
+
 
    {InitGame}
    {Time.delay 2500} %Waiting for the board to be full screened
