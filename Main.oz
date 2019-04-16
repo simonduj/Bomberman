@@ -12,6 +12,9 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   FirePropAux2
+   GetVal
+   NextPos
    FirePropAux
    GetValueAux
    GetValue
@@ -54,6 +57,21 @@ in
          {GetValue M.2 X-1 Y}
       end
    end
+   fun{GetVal Pos D}
+      if D==0 then {GetValue Input.map Pos.y+1 Pos.x}
+      elseif D==1 then {GetValue Input.map Pos.y Pos.x+1}
+      elseif D==2 then {GetValue Input.map Pos.y-1 Pos.x}
+      else {GetValue Input.map Pos.y Pos.x-1}
+      end 
+   end 
+   %Return the Next Position based on the direction D: N/E/S/O
+   fun{NextPos Pos D}
+      if D==0 then pt(x:Pos.x y:Pos.y+1)
+      elseif D==1 then pt(x:Pos.x+1 y:Pos.y)
+      elseif D==2 then pt(x:Pos.x y:Pos.y-1)
+      else pt(x:Pos.x-1 y:Pos.y)
+      end 
+   end 
    proc{InitGame}
       %% Implement your controller here
       Colors = Input.colorsBombers
@@ -82,7 +100,7 @@ in
       {Send PlayerPort info(spawnPlayer(T2 P2))}
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
-   end 
+   end  
    proc{FireProp Pos}
       {Send BoardPort spawnFire(Pos)} %first spawnFire where the bomb was dropped
       {FirePropAux Pos 0 Input.fire}
@@ -92,93 +110,33 @@ in
    end 
    %Proc for propagating fire with :
    %Pos : Pos where bomb exploded
-   %D : 0-N 1-E 2-S 3-W
+   %D : direction 
    %R : Distance for propagation ("Stop condition")
    % /!\ /!\ /!\ When we say X+1, it means one step in the north direction /!\ /!\ /!\ 
    proc{FirePropAux Pos D R}
       local NEXT in
       if R == 0 then skip 
-      elseif D == 0 then
-         NEXT = {GetValue Input.map Pos.y+1 Pos.x}
-         %PROPAGATE NORTH
-         if NEXT==1 then
-            skip
-            %STOP PROPAGATING
-         elseif NEXT==2 then
-            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y+1))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
-            {Send BoardPort spawnPoint(pt(x:Pos.x y:Pos.y+1))}
-         elseif NEXT==3 then
-            skip
-            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y+1))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
-            {Send BoardPort spawnBonus(pt(x:Pos.x y:Pos.y+1))}
-         else 
-            {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y+1))}
-            {FirePropAux pt(x:Pos.x y:Pos.y+1) 0 R-1}
-         end 
-      elseif D == 1 then
-         NEXT = {GetValue Input.map Pos.y Pos.x+1}
-         if NEXT==1 then
-            skip
-            %STOP PROPAGATING
-         elseif NEXT==2 then
-            {Send BoardPort hideBox(pt(x:Pos.x+1 y:Pos.y))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
-            {Send BoardPort spawnPoint(pt(x:Pos.x+1 y:Pos.y))}
-         elseif NEXT==3 then
-            {Send BoardPort hideBox(pt(x:Pos.x+1 y:Pos.y))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x+1 y:Pos.y)))}
-            {Send BoardPort spawnBonus(pt(x:Pos.x+1 y:Pos.y))}
-         else
-            {Send BoardPort spawnFire(pt(x:Pos.x+1 y:Pos.y))}
-            {FirePropAux pt(x:Pos.x+1 y:Pos.y) 1 R-1}
-         end 
-      elseif D == 2 then
-         NEXT = {GetValue Input.map Pos.y-1 Pos.x}
-         if NEXT==1 then
-            skip
-            %STOP PROPAGATING
-         elseif NEXT==2 then
-            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y-1))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
-            {Send BoardPort spawnPoint(pt(x:Pos.x y:Pos.y-1))}
-         elseif NEXT==3 then
-            skip
-            {Send BoardPort hideBox(pt(x:Pos.x y:Pos.y-1))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y-1)))}
-            {Send BoardPort spawnBonus(pt(x:Pos.x y:Pos.y-1))}
-         else
-            {Send BoardPort spawnFire(pt(x:Pos.x y:Pos.y-1))}
-            {FirePropAux pt(x:Pos.x y:Pos.y-1) 2 R-1}
-         end 
       else
-         NEXT = {GetValue Input.map Pos.y Pos.x-1}
+         NEXT = {GetVal Pos D}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
          elseif NEXT==2 then
-            {Send BoardPort hideBox(pt(x:Pos.x-1 y:Pos.y))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
-            {Send BoardPort spawnPoint(pt(x:Pos.x-1 y:Pos.y))}
+            {Send BoardPort hideBox({NextPos Pos D})}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            {Send BoardPort spawnPoint({NextPos Pos D})}
          elseif NEXT==3 then
             skip
-            {Send BoardPort hideBox(pt(x:Pos.x-1 y:Pos.y))}
-            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
-            %{Send Player2Port info(boxRemoved(pt(x:Pos.x-1 y:Pos.y)))}
-            {Send BoardPort spawnBonus(pt(x:Pos.x-1 y:Pos.y))}
-         else
-            {Send BoardPort spawnFire(pt(x:Pos.x-1 y:Pos.y))}
-            {FirePropAux pt(x:Pos.x-1 y:Pos.y) 3 R-1}
+            {Send BoardPort hideBox({NextPos Pos D})}
+            %{Send PlayerPort info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            %{Send Player2Port info(boxRemoved(pt(x:Pos.x y:Pos.y+1)))}
+            {Send BoardPort spawnBonus({NextPos Pos D})}
+         else 
+            {Send BoardPort spawnFire({NextPos Pos D})}
+            {FirePropAux {NextPos Pos D} D R-1}
          end 
-      end 
+      end
       end
    end 
 
