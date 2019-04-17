@@ -152,7 +152,7 @@ in
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
    end  
-   proc{FireProp Pos P}
+   proc{FireProp Pos P P2}
       local R in 
       {Send PlayerPort info(bombExploded(Pos))}
       {Send Player2Port info(bombExploded(Pos))}
@@ -198,6 +198,9 @@ in
 
    proc{TurnByTurnAux P P2} %P = PlayerPort 
    {Time.delay 500} %Just to see the dynamic !!
+   local PosP PosP2 in
+   {Browser.browse PosP}
+   {Browser.browse PosP2}
       local ID Action in 
          {Send P doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
          case Action
@@ -206,15 +209,38 @@ in
                {Send P2 info(movePlayer(ID Pos))}
                {Send P info(movePlayer(ID Pos))}
                {CheckPos Pos ID P}
+               PosP=Pos
             [] bomb(Pos) then
                {Send BoardPort spawnBomb(Pos)}
                {Send P2 info(bombPlanted(Pos))}
                {Send P info(bombPlanted(Pos))}
-               thread {Time.delay 2000} {FireProp Pos P} end%Simulate the waiting TO DO
+               PosP=Pos
+               thread 
+               {Time.delay 2000} {FireProp PosP PosP2 P P2} end%Simulate the waiting TO DO
          end
       end 
-      {TurnByTurnAux P2 P}%We permute P2 and P in the recursive call to have the TurnByTurn
-   end 
+      {Time.delay 500}
+      local ID Action in 
+         {Send P2 doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
+         case Action
+            of move(Pos) then
+               {Send BoardPort movePlayer(ID Pos)}
+               {Send P info(movePlayer(ID Pos))}
+               {Send P2 info(movePlayer(ID Pos))}
+               {CheckPos Pos ID P2}
+               PosP2=Pos
+            [] bomb(Pos) then
+               {Send BoardPort spawnBomb(Pos)}
+               {Send P info(bombPlanted(Pos))}
+               {Send P2 info(bombPlanted(Pos))}
+               PosP2=Pos
+               thread 
+               {Time.delay 2000} {FireProp PosP PosP2 P2 P} end%Simulate the waiting TO DO
+         end
+      end
+      end 
+      {TurnByTurnAux P P2}%We permute P2 and P in the recursive call to have the TurnByTurn
+   end
 
 
 
