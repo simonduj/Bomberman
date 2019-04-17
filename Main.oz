@@ -13,6 +13,10 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   CopyList
+   CopyListEx
+   UpdateMap
+   TurnByTurnAux2
    TurnByTurnAux
    IsTouched
    BinaryRand
@@ -67,6 +71,38 @@ in
          {List.member PosP L}
       end
    end
+  fun{CopyList Ybis}
+      if Ybis == nil then nil
+      else Ybis.1|{CopyList Ybis.2}
+      end   
+   end
+   %Return the same list but replace (Y) by 0
+   fun{CopyListEx Ybis Y}
+      if Y==1 then
+         if Ybis ==nil then nil
+         else
+            0|{CopyListEx Ybis.2 0}
+         end
+      else
+         if Ybis == nil then nil
+         else
+            Ybis.1|{CopyListEx Ybis.2 Y-1}
+         end
+      end
+   end
+   %Return the same map but replace (X,Y) by 0
+   fun{UpdateMap Xbis X Y}
+      if X==1 then
+         if Xbis.2==nil then {CopyListEx Xbis.1 Y}|nil
+         else {CopyListEx Xbis.1 Y}|{UpdateMap Xbis.2 0 Y}
+         end
+      else
+         if Xbis.2==nil then Xbis
+         else {CopyList Xbis.1}|{UpdateMap Xbis.2 X-1 Y}
+         end 
+      end
+   end
+
    fun{BinaryRand}
       local N in 
          N={OS.rand}
@@ -87,13 +123,14 @@ in
          {GetValue M.2 X-1 Y}
       end
    end
-   fun{GetNextValue Pos D}
-      if D==0 then {GetValue Input.map Pos.y+1 Pos.x}
-      elseif D==1 then {GetValue Input.map Pos.y Pos.x+1}
-      elseif D==2 then {GetValue Input.map Pos.y-1 Pos.x}
-      else {GetValue Input.map Pos.y Pos.x-1}
+   fun{GetNextValue M Pos D}
+      if D==0 then {GetValue M Pos.y+1 Pos.x}
+      elseif D==1 then {GetValue M Pos.y Pos.x+1}
+      elseif D==2 then {GetValue M Pos.y-1 Pos.x}
+      else {GetValue M Pos.y Pos.x-1}
       end 
    end 
+   %Return the same map as M but with M[Pos]=0
    %Return the Next Position based on the direction D: N/E/S/O
    fun{NextPos Pos D}
       if D==0 then pt(x:Pos.x y:Pos.y+1)
@@ -102,14 +139,14 @@ in
       else pt(x:Pos.x-1 y:Pos.y)
       end 
    end 
-   proc{CheckPos Pos ID P}
+   fun{CheckPos M Pos ID P}
       %HOW TO NOT COUNT MORE THAN 1 TIME THE POINT/BONUS
-      local R in
-      if {GetValue Input.map Pos.y Pos.x} == 2 then
+      local R Mbis in
+      if {GetValue M Pos.y Pos.x} == 2 then
          {Send P add(point 1 R)}
          {Send BoardPort hidePoint(Pos)}
          {Send BoardPort scoreUpdate(ID R)}
-      elseif {GetValue Input.map Pos.y Pos.x} == 3 then 
+      elseif {GetValue M Pos.y Pos.x} == 3 then 
          %DEAL WITH BONUS/BOMB
          if {BinaryRand}==0 then 
             {Send P add(bomb 1 R)}
@@ -120,6 +157,8 @@ in
             {Send BoardPort scoreUpdate(ID R)}
          end
       end 
+      Mbis={UpdateMap M Pos.y Pos.x}
+      Mbis
       end
    end 
    proc{InitGame}
@@ -152,16 +191,16 @@ in
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
    end  
-   proc{FireProp Pos P P2}
+   proc{FireProp M Pos PosP2 P P2}
       local R in 
       {Send PlayerPort info(bombExploded(Pos))}
       {Send Player2Port info(bombExploded(Pos))}
       {Send BoardPort spawnFire(Pos)} %first spawnFire where the bomb was dropped
       {Send P add(bomb 1 R)}
-      {FirePropAux Pos 0 Input.fire}
-      {FirePropAux Pos 1 Input.fire}
-      {FirePropAux Pos 2 Input.fire}
-      {FirePropAux Pos 3 Input.fire}
+      {FirePropAux M Pos 0 Input.fire}
+      {FirePropAux M Pos 1 Input.fire}
+      {FirePropAux M Pos 2 Input.fire}
+      {FirePropAux M Pos 3 Input.fire}
       end 
    end 
    %Proc for propagating fire with :
@@ -169,11 +208,11 @@ in
    %D : direction 
    %R : Distance for propagation ("Stop condition")
    % /!\ /!\ /!\ When we say X+1, it means one step in the north direction /!\ /!\ /!\ 
-   proc{FirePropAux Pos D R}
+   proc{FirePropAux M Pos D R}
       local NEXT in
       if R == 0 then skip 
       else
-         NEXT = {GetNextValue Pos D}
+         NEXT = {GetNextValue M Pos D}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
@@ -190,56 +229,42 @@ in
             {Send BoardPort spawnBonus({NextPos Pos D})}
          else 
             {Send BoardPort spawnFire({NextPos Pos D})}
-            {FirePropAux {NextPos Pos D} D R-1}
+            {FirePropAux M {NextPos Pos D} D R-1}
          end 
       end
       end
    end   
 
-   proc{TurnByTurnAux P P2} %P = PlayerPort 
-   {Time.delay 500} %Just to see the dynamic !!
-   local PosP PosP2 in
-   {Browser.browse PosP}
-   {Browser.browse PosP2}
-      local ID Action in 
-         {Send P doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
-         case Action
-            of move(Pos) then
-               {Send BoardPort movePlayer(ID Pos)}
-               {Send P2 info(movePlayer(ID Pos))}
-               {Send P info(movePlayer(ID Pos))}
-               {CheckPos Pos ID P}
-               PosP=Pos
-            [] bomb(Pos) then
-               {Send BoardPort spawnBomb(Pos)}
-               {Send P2 info(bombPlanted(Pos))}
-               {Send P info(bombPlanted(Pos))}
-               PosP=Pos
-               thread 
-               {Time.delay 2000} {FireProp PosP PosP2 P P2} end%Simulate the waiting TO DO
-         end
-      end 
-      {Time.delay 500}
-      local ID Action in 
-         {Send P2 doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
-         case Action
-            of move(Pos) then
-               {Send BoardPort movePlayer(ID Pos)}
-               {Send P info(movePlayer(ID Pos))}
-               {Send P2 info(movePlayer(ID Pos))}
-               {CheckPos Pos ID P2}
-               PosP2=Pos
-            [] bomb(Pos) then
-               {Send BoardPort spawnBomb(Pos)}
-               {Send P info(bombPlanted(Pos))}
-               {Send P2 info(bombPlanted(Pos))}
-               PosP2=Pos
-               thread 
-               {Time.delay 2000} {FireProp PosP PosP2 P2 P} end%Simulate the waiting TO DO
-         end
+   proc{TurnByTurnAux2 P P2 ID Action PosP PosP2 M}
+      {Send P doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
+      case Action
+         of move(Pos) then
+            {Send BoardPort movePlayer(ID Pos)}
+            {Send P2 info(movePlayer(ID Pos))}
+            {Send P info(movePlayer(ID Pos))}
+            PosP=Pos
+         [] bomb(Pos) then
+            {Send BoardPort spawnBomb(Pos)}
+            {Send P2 info(bombPlanted(Pos))}
+            {Send P info(bombPlanted(Pos))}
+            PosP=Pos
+            thread 
+            {Time.delay 2000} {FireProp M PosP PosP2 P P2} end%Simulate the waiting TO DO
       end
-      end 
-      {TurnByTurnAux P P2}%We permute P2 and P in the recursive call to have the TurnByTurn
+   end 
+
+   proc{TurnByTurnAux P P2 M} %P = PlayerPort 
+      {Time.delay 500} %Just to see the dynamic !!
+      local Mbis in
+         local PosP PosP2 ID Action ID2 Action2 Maux in
+            {TurnByTurnAux2 P P2 ID Action PosP PosP2 M}
+            Maux={CheckPos M PosP ID P}
+            {Time.delay 500}
+            {TurnByTurnAux2 P2 P ID2 Action2 PosP2 PosP Maux}
+            Mbis={CheckPos Maux PosP2 ID2 P2}
+         end 
+         {TurnByTurnAux P P2 Mbis}%We permute P2 and P in the recursive call to have the TurnByTurn
+      end
    end
 
 
@@ -252,5 +277,5 @@ in
 
    {InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   {TurnByTurnAux PlayerPort Player2Port}
+   {TurnByTurnAux PlayerPort Player2Port Input.map}
 end
