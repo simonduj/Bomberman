@@ -1,6 +1,6 @@
 functor
 import
-   Array
+   OS
    GUI
    Input
    PlayerManager
@@ -13,6 +13,7 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   BinaryRand
    NewUnboundedList
    NewUnboundedMap
    CheckPos
@@ -54,19 +55,14 @@ in
    proc{Simultaneous A}
       skip
    end 
-   fun{NewUnboundedMap X Y}
-      if X==0 then nil
-      else
-         {NewUnboundedList Y}|{NewUnboundedMap X-1 Y}
-      end
-   end
-
-   fun{NewUnboundedList Y}
-      if Y==0 then nil
-      else
-         _|{NewUnboundedList Y-1}
-      end
-   end
+   fun{BinaryRand}
+      local N in 
+         N={OS.rand}
+         if N mod 2 == 0 then 0
+         else 1
+         end 
+      end 
+   end 
    fun{GetValueAux L Y}
       if Y == 1 then L.1
       else
@@ -101,8 +97,18 @@ in
          {Send P add(point 1 R)}
          {Send BoardPort hidePoint(Pos)}
          {Send BoardPort scoreUpdate(ID R)}
+      elseif {GetValue Input.map Pos.y Pos.x} == 3 then 
+         %DEAL WITH BONUS/BOMB
+         if {BinaryRand}==0 then 
+            {Send P add(bomb 1 R)}
+            {Send BoardPort hideBonus(Pos)}
+         else
+            {Send P add(point 10 R)}
+            {Send BoardPort hideBonus(Pos)}
+            {Send BoardPort scoreUpdate(ID R)}
+         end
       end 
-      end 
+      end
    end 
    proc{InitGame}
       %% Implement your controller here
@@ -111,7 +117,7 @@ in
       %Grid = {GUI.buildWindow}
       Players = Input.bombers
 
-      
+
 
       ID = bomber(id:1 color:Colors.1 name:'Antoine')
       ID2 = bomber(id:2 color:red name:'Simon')
