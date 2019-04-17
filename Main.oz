@@ -13,6 +13,8 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   TurnByTurnAux
+   IsTouched
    BinaryRand
    NewUnboundedList
    NewUnboundedMap
@@ -55,6 +57,16 @@ in
    proc{Simultaneous A}
       skip
    end 
+   fun{IsTouched PosB PosP}
+      local L in  %L = A list that enumerates all the touched Pos by bomb in PosB
+         L=[PosB
+            pt(x:PosB.x+1 y:PosB.y) pt(x:PosB.x+2 y:PosB.y) pt(x:PosB.x+3 y:PosB.y)
+            pt(x:PosB.x-1 y:PosB.y) pt(x:PosB.x-2 y:PosB.y) pt(x:PosB.x-3 y:PosB.y)
+            pt(x:PosB.x y:PosB.y+1) pt(x:PosB.x y:PosB.y+2) pt(x:PosB.x y:PosB.y+3)
+            pt(x:PosB.x y:PosB.y-1) pt(x:PosB.x y:PosB.y-2) pt(x:PosB.x y:PosB.y-3)]
+         {List.member PosP L}
+      end
+   end
    fun{BinaryRand}
       local N in 
          N={OS.rand}
@@ -184,6 +196,24 @@ in
       end
    end   
 
+   proc{TurnByTurnAux P P2} %P = PlayerPort
+   {Time.delay 500}
+      local ID Action in 
+         {Send P doaction(ID Action)}
+         case Action
+            of move(Pos) then
+               {Send BoardPort movePlayer(ID Pos)}
+               {Send P2 info(movePlayer(ID Pos))}
+               {CheckPos Pos ID P}
+            [] bomb(Pos) then
+               {Send BoardPort spawnBomb(Pos)}
+               {Send P2 info(bombPlanted(Pos))}
+               thread {Time.delay 2000} {FireProp Pos P} end%Simulate the waiting TO DO
+         end
+      end 
+      {TurnByTurnAux P2 P}
+   end 
+
 
 
    %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
@@ -194,35 +224,5 @@ in
 
    {InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-
-   for I in 1..1000 do %1000 turn /!\ SHOULD BE REPLACED BY CONDITION ABOUT END OF THE GAME
-      {Time.delay 250}%Just to see the dynamic
-      local ID Action in 
-         if I mod 2 == 0 then % Alternate on Player1 and Player2
-            {Send PlayerPort doaction(ID Action)}
-            case Action 
-               of move(Pos) then 
-                  {Send BoardPort movePlayer(ID Pos)}
-                  {Send Player2Port info(movePlayer(ID Pos))}
-                  {CheckPos Pos ID PlayerPort}
-               [] bomb(Pos) then 
-                  {Send BoardPort spawnBomb(Pos)}
-                  {Send Player2Port info(bombPlanted(Pos))}
-                  thread {Time.delay 2000} {FireProp Pos PlayerPort} end%Simulate the waiting TO DO
-            end   
-         else
-            {Send Player2Port doaction(ID Action)}
-            case Action
-               of move(Pos) then 
-                  {Send BoardPort movePlayer(ID Pos)}
-                  {Send PlayerPort info(movePlayer(ID Pos))}
-                  {CheckPos Pos ID2 Player2Port}
-               [] bomb(Pos) then 
-                  {Send BoardPort spawnBomb(Pos)}
-                  {Send PlayerPort info(bombPlanted(Pos))}
-                  thread {Time.delay 2000} {FireProp Pos Player2Port} end%Simulate the waiting TO DO 
-            end 
-         end 
-      end 
-   end 
+   {TurnByTurnAux PlayerPort Player2Port}
 end
