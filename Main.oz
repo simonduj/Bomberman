@@ -196,22 +196,24 @@ in
       end
    end   
 
-   proc{TurnByTurnAux P P2} %P = PlayerPort
-   {Time.delay 500}
+   proc{TurnByTurnAux P P2} %P = PlayerPort 
+   {Time.delay 500} %Just to see the dynamic !!
       local ID Action in 
-         {Send P doaction(ID Action)}
+         {Send P doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
          case Action
             of move(Pos) then
                {Send BoardPort movePlayer(ID Pos)}
                {Send P2 info(movePlayer(ID Pos))}
+               {Send P info(movePlayer(ID Pos))}
                {CheckPos Pos ID P}
             [] bomb(Pos) then
                {Send BoardPort spawnBomb(Pos)}
                {Send P2 info(bombPlanted(Pos))}
+               {Send P info(bombPlanted(Pos))}
                thread {Time.delay 2000} {FireProp Pos P} end%Simulate the waiting TO DO
          end
       end 
-      {TurnByTurnAux P2 P}
+      {TurnByTurnAux P2 P}%We permute P2 and P in the recursive call to have the TurnByTurn
    end 
 
 
