@@ -13,6 +13,17 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   IsIn
+   IsTouchedAux
+   IsTouched
+   ExplodeBombs
+   ExplodeBombsAux
+   DecrBombs
+   DecrBomb
+   DecrBombsList
+   AddBomb
+   AddBombList
+   AddBombAux
    PlayersDat
    CopyList
    CopyListEx
@@ -62,15 +73,20 @@ in
    proc{Simultaneous A}
       skip
    end 
-   fun{IsTouchedBis PosB PosP}
-      local L in  %L = A list that enumerates all the touched Pos by bomb in PosB
-         L=[PosB
-            pt(x:PosB.x+1 y:PosB.y) pt(x:PosB.x+2 y:PosB.y) pt(x:PosB.x+3 y:PosB.y)
-            pt(x:PosB.x-1 y:PosB.y) pt(x:PosB.x-2 y:PosB.y) pt(x:PosB.x-3 y:PosB.y)
-            pt(x:PosB.x y:PosB.y+1) pt(x:PosB.x y:PosB.y+2) pt(x:PosB.x y:PosB.y+3)
-            pt(x:PosB.x y:PosB.y-1) pt(x:PosB.x y:PosB.y-2) pt(x:PosB.x y:PosB.y-3)]
-         {List.member PosP L}
-      end
+
+   fun{IsIn PosB Pos D R}%D=N/S/E/W
+      if R == 0 then false
+      elseif {NextPos PosB D} == Pos then true
+      else {IsIn {NextPos PosB D} Pos D R-1} end 
+   end
+
+   fun{IsTouchedBis PosB Pos}
+      if PosB == Pos then true 
+      elseif {IsIn PosB Pos 0 3} == true then true
+      elseif {IsIn PosB Pos 1 3} == true then true 
+      elseif {IsIn PosB Pos 2 3} == true then true
+      elseif {IsIn PosB Pos 3 3} == true then true 
+      else false end 
    end
 
    fun{IsTouchedAux Y Pos}
@@ -80,13 +96,13 @@ in
             if Time == 1 then
                if {IsTouchedBis Pos PosB} == true then true
                else
-                  {IsTouched M.2 Pos}
+                  {IsTouchedAux Y.2 Pos}
                end
             else
-               {IsTouched M.2 Pos}
+               {IsTouchedAux Y.2 Pos}
             end 
          else
-            {IsTouched M.2 Pos}
+            {IsTouchedAux Y.2 Pos}
          end
       end
    end
@@ -105,7 +121,7 @@ in
       if M == nil then skip
       else
          {ExplodeBombsAux M.1 M}
-         {ExplodeBombs M.2 M}
+         {ExplodeBombs M.2}
       end
    end
 
@@ -121,6 +137,64 @@ in
       end    
    end
 
+   fun{AddBombList L Y B}
+      if Y==1 then
+         if L==nil then nil
+         else
+            B|{AddBombList L.2 0 B}
+         end
+      else
+         if L==nil then nil
+         else
+            L.1|{AddBombList L.2 Y-1 B}
+         end
+      end    
+   end
+
+
+   fun{AddBomb B M}
+      if B==nil then M
+      else
+         {AddBombAux B M B.pos.y B.pos.x}
+      end
+   end
+
+   fun{AddBombAux B M X Y}
+      if X==1 then
+         if M.2==nil then {AddBombList M.1 Y B}|nil
+         else {AddBombList M.1 Y B}|{AddBombAux B M.2 0 Y}
+         end
+      else
+         if M.2==nil then M
+         else {CopyList M.1}|{AddBombAux B M.2 X-1 Y}
+         end
+      end
+   end
+
+   fun{DecrBombs M}
+      if M.2==nil then {DecrBombsList M.1}|nil
+      else
+         {DecrBombsList M.1}|{DecrBombs M.2}
+      end
+   end
+
+   fun{DecrBombsList L}
+      if L==nil then nil
+      else
+         case L.1 of bomb(pos:Pos player:Player time:Time) then
+            {DecrBomb L.1}|{DecrBombsList L.2}
+         else
+            L.1|{DecrBombsList L.2}
+         end
+      end   
+   end
+
+   fun{DecrBomb B}
+      if B.time == 1 then 0
+      else
+         bomb(pos:B.pos player:B.player time:B.time-1)
+      end       
+   end
 
    fun{CopyList Ybis}
       if Ybis == nil then nil
@@ -243,7 +317,7 @@ in
       {Send BoardPort spawnPlayer(ID2 P2)}
       %return a record with all infos about players 
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2))
-              p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID spawn:pt(x:12 y:6)))
+              p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6)))
    end  
    proc{FireProp M Pos P}
       local R in 
@@ -289,21 +363,24 @@ in
       end
    end   
 
-   proc{TurnByTurnAux2 P P2 ID Action PosP PosP2 M}
+   fun{TurnByTurnAux2 P P2 ID Action PosP M}
       {Send P doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
       case Action
          of move(Pos) then
             {Send BoardPort movePlayer(ID Pos)}
             {Send P2 info(movePlayer(ID Pos))}
+
             {Send P info(movePlayer(ID Pos))}
             PosP=Pos
+
             nil
          [] bomb(Pos) then
             {Send BoardPort spawnBomb(Pos)}
             {Send P2 info(bombPlanted(Pos))}
             {Send P info(bombPlanted(Pos))}
             PosP=Pos
-            bomb(pos:Pos player:Player time:Input.fire)
+
+            bomb(pos:Pos player:P time:Input.fire)
       end
    end 
 
@@ -312,26 +389,28 @@ in
       local Mbis PosP PosP2  NewLife NewLife2 in
          local Action Action2 Maux B1 B2 IsT IsT2 in
             {ExplodeBombs M}
+            {Time.delay 500}
             IsT={IsTouched M Players.p1.pos}
-            IsT={IsTouched M Players.p2.pos}
+            IsT2={IsTouched M Players.p2.pos}
 
             %We hide the touched Players at the same time
-            if IsT == true
+            if IsT == true then
                NewLife = Players.p1.life-1
                {Send BoardPort hidePlayer(Players.p1.id)}
                {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
             else 
-               NewLife = Players.p1.life
+               NewLife = Players.p1.life  
             end
-            if IsT2 == true 
+            if IsT2 == true then
                NewLife = Players.p2.life-1
                {Send BoardPort hidePlayer(Players.p2.id)}
                {Send BoardPort lifeUpdate(Players.p2.id NewLife2)}
             else 
                NewLife2 = Players.p2.life
+            
             end 
 
-
+            {Time.delay 500}
             %MAYBE WE WILL HAVE TO CHANGE THE ORDER FOR THE LOGIC OF THE VIEW 
             if IsT == true then 
                B1=nil
@@ -340,29 +419,39 @@ in
                {Send BoardPort spawnPlayer(Players.p1.spawn)}
                %Do What hase to be done
             else
-               B1={TurnByTurnAux2 Players.p1.port Player.p2.port Player.p1.id Action PosP M}
-               Maux={CheckPos M PosP Players.p1.id Players.p1.port}
+               B1={TurnByTurnAux2 Players.p1.port Players.p2.port Players.p1.id Action PosP M}
+               Maux={CheckPos {AddBomb B1 M} PosP Players.p1.id Players.p1.port}
             end 
-
-            {Time.delay 500}
-
+                                                
             if IsT2 == true then
                B2=nil
-               Mbis={AddBombs B1 B2 Maux}
-               PosP2=Player.p2.spawn
+               Mbis=Maux
+               PosP2=Players.p2.spawn
                {Send BoardPort spawnPlayer(Players.p2.spawn)}
                %Do What has to be done
-            else
-               B1={TurnByTurnAux2 Players.p2.port Player.p1.port Player.p2.id Action2 PosP2 M}
-               Mbis={AddBombs B1 B2 {CheckPos Maux PosP2 Players.p2.id Players.p2.port}}
+            else       
+                  
+
+               B2={TurnByTurnAux2 Players.p2.port Players.p1.port Players.p2.id Action2 PosP2 Maux}
+               Mbis={CheckPos {AddBomb B2 Maux} PosP2 Players.p2.id Players.p2.port}
+                                          
             end 
 
          end 
          {TurnByTurnAux 
-            players(p1: player(port:Players.p1.port pos:PosP life:NewLife id:Players.p1.id spawn:Players.p1.spawn)
-                    p2: player(port:Players.p2.port pos:PosP2 life:NewLife2 id:Players.p2.id spawn:Players.p2.spawn))
+            players(p1:player(port:Players.p1.port 
+                        pos:PosP 
+                        life:NewLife 
+                        id:Players.p1.id 
+                        spawn:Players.p1.spawn)
 
-            Mbis}%We permute P2 and P in the recursive call to have the TurnByTurn
+                    p2:player(port:Players.p2.port 
+                        pos:PosP2 
+                        life:NewLife2 
+                        id:Players.p2.id 
+                        spawn:Players.p2.spawn))
+
+            {DecrBombs Mbis}}%We permute P2 and P in the recursive call to have the TurnByTurn
       end
    end
 
