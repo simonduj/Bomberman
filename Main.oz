@@ -128,11 +128,12 @@ in
    proc{ExplodeBombsAux Y M}
       if Y == nil then skip
       else
-         case Y.1 of bomb(p:P pos:Pos time:Time) then
+         case Y.1 of bomb(pos:Pos player:P time:Time) then
             if Time == 1 then {FireProp M Pos P} end 
             {ExplodeBombsAux Y.2 M}
          else
             {ExplodeBombsAux Y.2 M}
+         
          end
       end    
    end
@@ -388,6 +389,8 @@ in
       {Time.delay 500} %Just to see the dynamic !!
       local Mbis PosP PosP2  NewLife NewLife2 in
          local Action Action2 Maux B1 B2 IsT IsT2 in
+                                 {Browser.browse M}
+            {Time.delay 350}
             {ExplodeBombs M}
             {Time.delay 500}
             IsT={IsTouched M Players.p1.pos}
@@ -436,6 +439,8 @@ in
                Mbis={CheckPos {AddBomb B2 Maux} PosP2 Players.p2.id Players.p2.port}
                                           
             end 
+            {Browser.browse B1}
+            {Browser.browse B2}
 
          end 
          {TurnByTurnAux 
