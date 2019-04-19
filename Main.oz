@@ -13,12 +13,13 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   PlayersDat
    CopyList
    CopyListEx
    UpdateMap
    TurnByTurnAux2
    TurnByTurnAux
-   IsTouched
+   IsTouchedBis
    BinaryRand
    NewUnboundedList
    NewUnboundedMap
@@ -61,7 +62,7 @@ in
    proc{Simultaneous A}
       skip
    end 
-   fun{IsTouched PosB PosP}
+   fun{IsTouchedBis PosB PosP}
       local L in  %L = A list that enumerates all the touched Pos by bomb in PosB
          L=[PosB
             pt(x:PosB.x+1 y:PosB.y) pt(x:PosB.x+2 y:PosB.y) pt(x:PosB.x+3 y:PosB.y)
@@ -71,7 +72,57 @@ in
          {List.member PosP L}
       end
    end
-  fun{CopyList Ybis}
+
+   fun{IsTouchedAux Y Pos}
+      if Y == nil then false
+      else
+         case Y.1 of bomb(p:P pos:PosB time:Time) then
+            if Time == 1 then
+               if {IsTouchedBis Pos PosB} == true then true
+               else
+                  {IsTouched M.2 Pos}
+               end
+            else
+               {IsTouched M.2 Pos}
+            end 
+         else
+            {IsTouched M.2 Pos}
+         end
+      end
+   end
+
+   fun{IsTouched M Pos}
+      if M == nil then false
+      else
+         if {IsTouchedAux M.1 Pos} == true then true %return true
+         else
+            {IsTouched M.2 Pos}
+         end
+      end
+   end
+   
+   proc{ExplodeBombs M}
+      if M == nil then skip
+      else
+         {ExplodeBombsAux M.1 M}
+         {ExplodeBombs M.2 M}
+      end
+   end
+
+   proc{ExplodeBombsAux Y M}
+      if Y == nil then skip
+      else
+         case Y.1 of bomb(p:P pos:Pos time:Time) then
+            if Time == 1 then {FireProp M Pos P} end 
+            {ExplodeBombsAux Y.2 M}
+         else
+            {ExplodeBombsAux Y.2 M}
+         end
+      end    
+   end
+
+
+   fun{CopyList Ybis}
       if Ybis == nil then nil
       else Ybis.1|{CopyList Ybis.2}
       end   
@@ -161,7 +212,7 @@ in
       Mbis
       end
    end 
-   proc{InitGame}
+   fun{InitGame}
       %% Implement your controller here
       Colors = Input.colorsBombers
       NbPlayers = Input.nbBombers
@@ -190,8 +241,11 @@ in
       {Send PlayerPort info(spawnPlayer(T2 P2))}
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
+      %return a record with all infos about players 
+      players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2))
+              p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID spawn:pt(x:12 y:6)))
    end  
-   proc{FireProp M Pos PosP2 P P2}
+   proc{FireProp M Pos P}
       local R in 
       {Send PlayerPort info(bombExploded(Pos))}
       {Send Player2Port info(bombExploded(Pos))}
@@ -243,27 +297,72 @@ in
             {Send P2 info(movePlayer(ID Pos))}
             {Send P info(movePlayer(ID Pos))}
             PosP=Pos
+            nil
          [] bomb(Pos) then
             {Send BoardPort spawnBomb(Pos)}
             {Send P2 info(bombPlanted(Pos))}
             {Send P info(bombPlanted(Pos))}
             PosP=Pos
-            thread 
-            {Time.delay 2000} {FireProp M PosP PosP2 P P2} end%Simulate the waiting TO DO
+            bomb(pos:Pos player:Player time:Input.fire)
       end
    end 
 
-   proc{TurnByTurnAux P P2 M} %P = PlayerPort 
+   proc{TurnByTurnAux Players M} %P = PlayerPort 
       {Time.delay 500} %Just to see the dynamic !!
-      local Mbis in
-         local PosP PosP2 ID Action ID2 Action2 Maux in
-            {TurnByTurnAux2 P P2 ID Action PosP PosP2 M}
-            Maux={CheckPos M PosP ID P}
+      local Mbis PosP PosP2  NewLife NewLife2 in
+         local Action Action2 Maux B1 B2 IsT IsT2 in
+            {ExplodeBombs M}
+            IsT={IsTouched M Players.p1.pos}
+            IsT={IsTouched M Players.p2.pos}
+
+            %We hide the touched Players at the same time
+            if IsT == true
+               NewLife = Players.p1.life-1
+               {Send BoardPort hidePlayer(Players.p1.id)}
+               {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
+            else 
+               NewLife = Players.p1.life
+            end
+            if IsT2 == true 
+               NewLife = Players.p2.life-1
+               {Send BoardPort hidePlayer(Players.p2.id)}
+               {Send BoardPort lifeUpdate(Players.p2.id NewLife2)}
+            else 
+               NewLife2 = Players.p2.life
+            end 
+
+
+            %MAYBE WE WILL HAVE TO CHANGE THE ORDER FOR THE LOGIC OF THE VIEW 
+            if IsT == true then 
+               B1=nil
+               Maux=M
+               PosP=Players.p1.spawn
+               {Send BoardPort spawnPlayer(Players.p1.spawn)}
+               %Do What hase to be done
+            else
+               B1={TurnByTurnAux2 Players.p1.port Player.p2.port Player.p1.id Action PosP M}
+               Maux={CheckPos M PosP Players.p1.id Players.p1.port}
+            end 
+
             {Time.delay 500}
-            {TurnByTurnAux2 P2 P ID2 Action2 PosP2 PosP Maux}
-            Mbis={CheckPos Maux PosP2 ID2 P2}
+
+            if IsT2 == true then
+               B2=nil
+               Mbis={AddBombs B1 B2 Maux}
+               PosP2=Player.p2.spawn
+               {Send BoardPort spawnPlayer(Players.p2.spawn)}
+               %Do What has to be done
+            else
+               B1={TurnByTurnAux2 Players.p2.port Player.p1.port Player.p2.id Action2 PosP2 M}
+               Mbis={AddBombs B1 B2 {CheckPos Maux PosP2 Players.p2.id Players.p2.port}}
+            end 
+
          end 
-         {TurnByTurnAux P P2 Mbis}%We permute P2 and P in the recursive call to have the TurnByTurn
+         {TurnByTurnAux 
+            players(p1: player(port:Players.p1.port pos:PosP life:NewLife id:Players.p1.id spawn:Players.p1.spawn)
+                    p2: player(port:Players.p2.port pos:PosP2 life:NewLife2 id:Players.p2.id spawn:Players.p2.spawn))
+
+            Mbis}%We permute P2 and P in the recursive call to have the TurnByTurn
       end
    end
 
@@ -275,7 +374,7 @@ in
 
 
 
-   {InitGame}
+   PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   {TurnByTurnAux PlayerPort Player2Port Input.map}
+   {TurnByTurnAux PlayersDat Input.map }
 end
