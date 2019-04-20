@@ -117,11 +117,11 @@ in
       end
    end
    
-   proc{ExplodeBombs M}
-      if M == nil then skip
+   proc{ExplodeBombs M Mor}
+      if M.2 == nil then {ExplodeBombsAux M.1 Mor}
       else
-         {ExplodeBombsAux M.1 M}
-         {ExplodeBombs M.2}
+         {ExplodeBombsAux M.1 Mor}
+         {ExplodeBombs M.2 Mor}
       end
    end
 
@@ -272,6 +272,8 @@ in
          {Send P add(point 1 R)}
          {Send BoardPort hidePoint(Pos)}
          {Send BoardPort scoreUpdate(ID R)}
+         Mbis={UpdateMap M Pos.y Pos.x}
+         Mbis
       elseif {GetValue M Pos.y Pos.x} == 3 then 
          %DEAL WITH BONUS/BOMB
          if {BinaryRand}==0 then 
@@ -282,9 +284,10 @@ in
             {Send BoardPort hideBonus(Pos)}
             {Send BoardPort scoreUpdate(ID R)}
          end
+         Mbis={UpdateMap M Pos.y Pos.x}
+         Mbis
+      else M
       end 
-      Mbis={UpdateMap M Pos.y Pos.x}
-      Mbis
       end
    end 
    fun{InitGame}
@@ -342,6 +345,7 @@ in
       if R == 0 then skip 
       else
          NEXT = {GetNextValue M Pos D}
+         {Browser.browse Pos}
          if NEXT==1 then
             skip
             %STOP PROPAGATING
@@ -388,11 +392,11 @@ in
    proc{TurnByTurnAux Players M} %P = PlayerPort 
       {Time.delay 500} %Just to see the dynamic !!
       local Mbis PosP PosP2  NewLife NewLife2 in
-         local Action Action2 Maux B1 B2 IsT IsT2 in
-                                 {Browser.browse M}
-            {Time.delay 350}
-            {ExplodeBombs M}
-            {Time.delay 500}
+         local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 in
+                    
+                      
+            {ExplodeBombs M M}
+
             IsT={IsTouched M Players.p1.pos}
             IsT2={IsTouched M Players.p2.pos}
 
@@ -423,9 +427,10 @@ in
                %Do What hase to be done
             else
                B1={TurnByTurnAux2 Players.p1.port Players.p2.port Players.p1.id Action PosP M}
-               Maux={CheckPos {AddBomb B1 M} PosP Players.p1.id Players.p1.port}
+               W1={AddBomb B1 M}
+               Maux={CheckPos W1 PosP Players.p1.id Players.p1.port}
             end 
-                                                
+            {Time.delay 500}                               
             if IsT2 == true then
                B2=nil
                Mbis=Maux
@@ -433,14 +438,12 @@ in
                {Send BoardPort spawnPlayer(Players.p2.spawn)}
                %Do What has to be done
             else       
-                  
-
                B2={TurnByTurnAux2 Players.p2.port Players.p1.port Players.p2.id Action2 PosP2 Maux}
-               Mbis={CheckPos {AddBomb B2 Maux} PosP2 Players.p2.id Players.p2.port}
+               W2={AddBomb B2 Maux}
+
+               Mbis={CheckPos W2 PosP2 Players.p2.id Players.p2.port}
                                           
             end 
-            {Browser.browse B1}
-            {Browser.browse B2}
 
          end 
          {TurnByTurnAux 
