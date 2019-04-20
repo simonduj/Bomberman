@@ -13,6 +13,7 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   HideFire
    IsIn
    IsTouchedAux
    IsTouched
@@ -323,16 +324,30 @@ in
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2))
               p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6)))
    end  
-   proc{FireProp M Pos P}
-      local R in 
+   proc{HideFire L B}
+      if B==true then {Send BoardPort hideBomb(L.1)}
+                      {Send BoardPort hideFire(L.1)}
+                      {HideFire L.2 false}
+      elseif L.2 == nil then {Send BoardPort hideFire(L.1)}
+      else 
+         {Send BoardPort hideFire(L.1)}
+         {HideFire L.2 false}
+      end 
+   end 
+
+   proc{FireProp M Pos P} %LFINAL is a list containing all the Pos where fire spawned
+      local R L1 L2 L3 L4 LFINAL in 
       {Send PlayerPort info(bombExploded(Pos))}
       {Send Player2Port info(bombExploded(Pos))}
       {Send BoardPort spawnFire(Pos)} %first spawnFire where the bomb was dropped
       {Send P add(bomb 1 R)}
-      {FirePropAux M Pos 0 Input.fire}
-      {FirePropAux M Pos 1 Input.fire}
-      {FirePropAux M Pos 2 Input.fire}
-      {FirePropAux M Pos 3 Input.fire}
+      L1={FirePropAux M Pos 0 Input.fire}
+      L2={FirePropAux M Pos 1 Input.fire}
+      L3={FirePropAux M Pos 2 Input.fire}
+      L4={FirePropAux M Pos 3 Input.fire}
+      LFINAL={List.append Pos|nil {List.append L1 {List.append L2 {List.append L3 L4}}}}
+      {Time.delay 650}
+      {HideFire LFINAL true}
       end 
    end 
    %Proc for propagating fire with :
@@ -340,29 +355,31 @@ in
    %D : direction 
    %R : Distance for propagation ("Stop condition")
    % /!\ /!\ /!\ When we say X+1, it means one step in the north direction /!\ /!\ /!\ 
-   proc{FirePropAux M Pos D R}
+   fun{FirePropAux M Pos D R}
       local NEXT in
-      if R == 0 then skip 
+      if R == 0 then nil
       else
          NEXT = {GetNextValue M Pos D}
          {Browser.browse Pos}
          if NEXT==1 then
             skip
+            nil
             %STOP PROPAGATING
          elseif NEXT==2 then
             {Send BoardPort hideBox({NextPos Pos D})}
             {Send PlayerPort info(boxRemoved({NextPos Pos D}))}
             {Send Player2Port info(boxRemoved({NextPos Pos D}))}
             {Send BoardPort spawnPoint({NextPos Pos D})}
+            nil
          elseif NEXT==3 then
-            skip
             {Send BoardPort hideBox({NextPos Pos D})}
             {Send PlayerPort info(boxRemoved({NextPos Pos D}))}
             {Send Player2Port info(boxRemoved({NextPos Pos D}))}
             {Send BoardPort spawnBonus({NextPos Pos D})}
+            nil
          else 
             {Send BoardPort spawnFire({NextPos Pos D})}
-            {FirePropAux M {NextPos Pos D} D R-1}
+            {NextPos Pos D}|{FirePropAux M {NextPos Pos D} D R-1}
          end 
       end
       end
