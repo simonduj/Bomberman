@@ -13,6 +13,10 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   Winner  
+   EndOfTheGame
+   GameEnd 
+   BelongsTo
    HideFire
    IsIn
    IsTouchedAux
@@ -117,24 +121,43 @@ in
          end
       end
    end
-   
-   proc{ExplodeBombs M Mor}
-      if M.2 == nil then {ExplodeBombsAux M.1 Mor}
+
+   fun{BelongsTo L P}
+      if L == nil then false
       else
-         {ExplodeBombsAux M.1 Mor}
-         {ExplodeBombs M.2 Mor}
+         if L.1 == P then true
+         else
+            {BelongsTo L.2 P}
+         end 
       end
    end
 
-   proc{ExplodeBombsAux Y M}
-      if Y == nil then skip
+
+   
+   fun{ExplodeBombs M Mor L}
+      if M.2 == nil then {ExplodeBombsAux M.1 Mor L}
+      else
+         local Laux in
+            Laux={ExplodeBombsAux M.1 Mor nil}
+            {ExplodeBombs M.2 Mor {List.append L Laux}}
+         end 
+      end
+   end
+
+   fun{ExplodeBombsAux Y M L}
+      if Y == nil then L
       else
          case Y.1 of bomb(pos:Pos player:P time:Time) then
-            if Time == 1 then {FireProp M Pos P} end 
-            {ExplodeBombsAux Y.2 M}
+            local Laux in 
+               if Time == 1 then
+                  Laux={FireProp M Pos P} 
+               else 
+                  Laux=nil
+               end 
+               {ExplodeBombsAux Y.2 M {List.append L Laux}}
+            end 
          else
-            {ExplodeBombsAux Y.2 M}
-         
+            {ExplodeBombsAux Y.2 M L}
          end
       end    
    end
@@ -324,6 +347,10 @@ in
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2))
               p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6)))
    end  
+
+   fun{EndOfTheGame P}
+      nil
+   end 
    proc{HideFire L B}
       if B==true then {Send BoardPort hideBomb(L.1)}
                       {Send BoardPort hideFire(L.1)}
@@ -335,7 +362,7 @@ in
       end 
    end 
 
-   proc{FireProp M Pos P} %LFINAL is a list containing all the Pos where fire spawned
+   fun{FireProp M Pos P} %LFINAL is a list containing all the Pos where fire spawned
       local R L1 L2 L3 L4 LFINAL in 
       {Send PlayerPort info(bombExploded(Pos))}
       {Send Player2Port info(bombExploded(Pos))}
@@ -348,6 +375,7 @@ in
       LFINAL={List.append Pos|nil {List.append L1 {List.append L2 {List.append L3 L4}}}}
       {Time.delay 650}
       {HideFire LFINAL true}
+      LFINAL
       end 
    end 
    %Proc for propagating fire with :
@@ -360,7 +388,6 @@ in
       if R == 0 then nil
       else
          NEXT = {GetNextValue M Pos D}
-         {Browser.browse Pos}
          if NEXT==1 then
             skip
             nil
@@ -386,7 +413,7 @@ in
    end   
 
    fun{TurnByTurnAux2 P P2 ID Action PosP M}
-      {Send P doaction(ID Action)} %Ask the Player to do his action (P(bomb)=0.1 & P(move)=0.9)
+      {Send P doaction(ID Action)}
       case Action
          of move(Pos) then
             {Send BoardPort movePlayer(ID Pos)}
@@ -402,23 +429,27 @@ in
             {Send P info(bombPlanted(Pos))}
             PosP=Pos
 
-            bomb(pos:Pos player:P time:Input.fire)
+            bomb(pos:Pos player:P time:Input.fire*2)
+         else 
+         nil
       end
    end 
 
    proc{TurnByTurnAux Players M} %P = PlayerPort 
-      {Time.delay 500} %Just to see the dynamic !!
-      local Mbis PosP PosP2  NewLife NewLife2 in
-         local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 in
+      {Time.delay 350} %Just to see the dynamic !!
+      local Mbis PosP PosP2  NewLife NewLife2 End Winner in
+         local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 LOB in
                     
                       
-            {ExplodeBombs M M}
-
-            IsT={IsTouched M Players.p1.pos}
-            IsT2={IsTouched M Players.p2.pos}
+            LOB={ExplodeBombs M M nil}
+            IsT={BelongsTo LOB Players.p1.pos}
+            IsT2={BelongsTo LOB Players.p2.pos}
 
             %We hide the touched Players at the same time
             if IsT == true then
+               local A B in 
+                  {Send Players.p1.port gotHit(A B)}
+               end 
                NewLife = Players.p1.life-1
                {Send BoardPort hidePlayer(Players.p1.id)}
                {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
@@ -426,7 +457,10 @@ in
                NewLife = Players.p1.life  
             end
             if IsT2 == true then
-               NewLife = Players.p2.life-1
+               local A B in 
+                  {Send Players.p2.port gotHit(A B)}
+               end 
+               NewLife2 = Players.p2.life-1
                {Send BoardPort hidePlayer(Players.p2.id)}
                {Send BoardPort lifeUpdate(Players.p2.id NewLife2)}
             else 
@@ -434,35 +468,61 @@ in
             
             end 
 
-            {Time.delay 500}
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%% END CHEKING HERE %%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            if NewLife == 0 then 
+               End=true
+               Winner=Players.p2
+            elseif NewLife2 == 0 then 
+               End=true 
+               Winner=Players.p1
+            else 
+               End = false 
+            end 
+
+            if End == false then 
+
             %MAYBE WE WILL HAVE TO CHANGE THE ORDER FOR THE LOGIC OF THE VIEW 
             if IsT == true then 
                B1=nil
                Maux=M
-               PosP=Players.p1.spawn
-               {Send BoardPort spawnPlayer(Players.p1.spawn)}
+               local IDx Posx in 
+                  {Send Players.p1.port spawn(IDx Posx)}
+                  {Send BoardPort spawnPlayer(IDx Posx)}
+                  PosP = Posx
+               end 
                %Do What hase to be done
             else
-               B1={TurnByTurnAux2 Players.p1.port Players.p2.port Players.p1.id Action PosP M}
-               W1={AddBomb B1 M}
-               Maux={CheckPos W1 PosP Players.p1.id Players.p1.port}
+               local IDx Actionx in
+                  B1={TurnByTurnAux2 Players.p1.port Players.p2.port IDx Actionx PosP M}
+                  W1={AddBomb B1 M}
+                  Maux={CheckPos W1 PosP Players.p1.id Players.p1.port}
+               end 
             end 
-            {Time.delay 500}                               
+            {Time.delay 350}
             if IsT2 == true then
                B2=nil
                Mbis=Maux
-               PosP2=Players.p2.spawn
-               {Send BoardPort spawnPlayer(Players.p2.spawn)}
+               local IDx Posx in 
+                  {Send Players.p2.port spawn(IDx Posx)}
+                  {Send BoardPort spawnPlayer(IDx Posx)}
+                  PosP2 = Posx
+               end 
                %Do What has to be done
-            else       
-               B2={TurnByTurnAux2 Players.p2.port Players.p1.port Players.p2.id Action2 PosP2 Maux}
-               W2={AddBomb B2 Maux}
-
-               Mbis={CheckPos W2 PosP2 Players.p2.id Players.p2.port}
-                                          
+            else     
+               local IDx Actionx  in 
+                  B2={TurnByTurnAux2 Players.p2.port Players.p1.port IDx Actionx PosP2 Maux}
+                  W2={AddBomb B2 Maux}
+                  Mbis={CheckPos W2 PosP2 Players.p2.id Players.p2.port}
+               end 
             end 
 
-         end 
+            end %CLOSE the "if End == false then ... END"
+
+         end
+
+         if End == false then 
          {TurnByTurnAux 
             players(p1:player(port:Players.p1.port 
                         pos:PosP 
@@ -476,7 +536,11 @@ in
                         id:Players.p2.id 
                         spawn:Players.p2.spawn))
 
-            {DecrBombs Mbis}}%We permute P2 and P in the recursive call to have the TurnByTurn
+            {DecrBombs Mbis} }%We permute P2 and P in the recursive call to have the TurnByTurn
+         else 
+            %DISPLAY THE WINNER
+            {Send BoardPort displayWinner(Winner.id)}
+         end%Close the second END contidion 
       end
    end
 
@@ -490,5 +554,5 @@ in
 
    PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   {TurnByTurnAux PlayersDat Input.map }
+   {TurnByTurnAux PlayersDat Input.map}
 end
