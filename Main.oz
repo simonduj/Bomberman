@@ -13,6 +13,8 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   SimultaneousAux
+   Rand
    Winner  
    EndOfTheGame
    GameEnd 
@@ -71,12 +73,8 @@ in
    %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
 
 
-   proc{TurnByTurn A}
-      skip
-   end 
-
-   proc{Simultaneous A}
-      skip
+   fun{Rand Min Max}
+      ({OS.rand} mod (Max - Min +1)) + Min
    end 
 
    fun{IsIn PosB Pos D R}%D=N/S/E/W
@@ -544,6 +542,32 @@ in
       end
    end
 
+   proc{SimultaneousAux P M}
+      {Time.delay {Rand Input.thinkMin Input.thinkMax}}
+      local B W IDx Actionx PosP Paux in 
+         B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M}
+         if B == nil then 
+            Paux=player(port:P.port pos:PosP life:P.life id:P.id spawn:P.spawn)
+            {SimultaneousAux Paux M}
+         else 
+            Paux = P
+            {SimultaneousAux Paux M}
+         end   
+      end 
+   end 
+
+   proc{Simultaneous Players M}
+
+      thread 
+         {SimultaneousAux Players.p1 M}
+      end 
+
+      thread 
+         {SimultaneousAux Players.p2 M}
+      end 
+
+   end 
+
 
 
    %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
@@ -554,5 +578,6 @@ in
 
    PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   {TurnByTurnAux PlayersDat Input.map}
+   %{TurnByTurnAux PlayersDat Input.map}
+   {Simultaneous PlayersDat Input.map}
 end
