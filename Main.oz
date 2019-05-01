@@ -551,6 +551,13 @@ in
             {SimultaneousAux Paux M}
          else 
             Paux = P
+            thread 
+               local L in 
+               {Time.delay {Rand Input.timingBombMin Input.timingBombMax}}
+               %HANDLE BOMB EXPLODING 
+               L={FireProp M B.pos P.port}
+               end
+            end 
             {SimultaneousAux Paux M}
          end   
       end 
