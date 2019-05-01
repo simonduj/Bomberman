@@ -23,16 +23,8 @@ define
    RemovePosFromListAux
    ListMap
    Spawn
-   CheckPos
-   UpdateMap
-   ListMap
    ReadMap
 in
-   
-   fun{CheckPos Map Pos}
-      {Nth {Nth Map Pos.y} Pos.x}
-   end
-
    fun {ListMap Arg}
       fun {ReadMap Row Column}
          if (Row > (Input.nbRow)) then nil
@@ -54,31 +46,6 @@ in
       end
       {ReadMap 1 1}
    end
-
-
-   %fun{ListMap Arg}
-   %   fun{ReadMap Row Column}
-   %      if(Row > Input.nbRow) then nil
-   %      else
-   %         if(Column == Input.nbColumn)
-   %            if({List.nth {List.nth Input.map Row} Column} == Arg) then
-   %               pt(x:Column y:Row)|{ReadMap Row+1 1}
-   %            else
-   %               {ReadMap Row+1 1}
-   %            end
-   %         else
-   %            if({List.nth {List.nth Input.map Row} Column} == Arg) then
-   %               pt(x:Column y:Row)|{ReadMap Row Column+1}
-   %            else
-   %               {ReadMap Row Column+1}
-   %            end
-   %         end 
-   %      end
-   %   end
-   %   {ReadMap 1 1}
-   %end
-   
-   
    
    fun{RemovePosFromList L Pos}
     case L of nil then nil
@@ -122,7 +89,7 @@ in
          Pos = null
       else
          ID = State.id
-         Pos = State.pos
+         Pos = State.spawnpos
       end
       State
    end
