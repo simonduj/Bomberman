@@ -13,6 +13,8 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   CountBoxesAux
+   CountBoxes
    NewManager
    SimultaneousAux
    Rand
@@ -73,6 +75,25 @@ in
    %--------------------------HELPER--------------------------
    %%%%%%%%%%%%%%%%%%%%%%%%           %%%%%%%%%%%%%%%%%%%%%%%%
 
+   fun{CountBoxes M N}
+      if M == nil then N
+      else
+         {CountBoxes M.2 N+{CountBoxesAux M.1 0}}
+      end 
+   end 
+
+   fun{CountBoxesAux L N}
+      if L == nil then N
+      else 
+         if L.1 == 2 then 
+            {CountBoxesAux L.2 N+1}
+         elseif L.1 == 3 then 
+            {CountBoxesAux L.2 N+1}
+         else
+            {CountBoxesAux L.2 N}
+         end 
+      end 
+   end 
 
    fun{Rand Min Max}
       ({OS.rand} mod (Max - Min +1)) + Min
@@ -478,7 +499,7 @@ in
       end
    end 
 
-   proc{TurnByTurnAux Players M} %P = PlayerPort 
+   proc{TurnByTurnAux Players M} %N=number of boxes currently left
       {Time.delay 350} %Just to see the dynamic !!
       local Mbis PosP PosP2  NewLife NewLife2 End Winner in
          local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 LOB in
@@ -579,7 +600,7 @@ in
                         id:Players.p2.id 
                         spawn:Players.p2.spawn))
 
-            {DecrBombs Mbis} }%We permute P2 and P in the recursive call to have the TurnByTurn
+            {DecrBombs Mbis}}%We permute P2 and P in the recursive call to have the TurnByTurn
          else 
             %DISPLAY THE WINNER
             {Send BoardPort displayWinner(Winner.id)}
@@ -683,6 +704,7 @@ in
 
    PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
+   {Browser.browse {CountBoxes Input.map 0}}
    if Input.isTurnByTurn == true then 
       {TurnByTurnAux PlayersDat Input.map}
    else
