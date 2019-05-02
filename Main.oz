@@ -5,6 +5,7 @@ import
    Input
    PlayerManager
    Browser
+   Application
 export
    turnByTurn:TurnByTurn
    simultaneous:Simultaneous
@@ -577,8 +578,6 @@ in
       local Mbis PosP PosP2  NewLife NewLife2 End Winner ScoreP1 ScoreP2 in
          local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 LOB Mup in
                     
-            {Browser.browse Players.p1.score}
-            {Browser.browse Players.p2.score}
             LOB={ExplodeBombs M M nil}
             IsT={BelongsTo LOB Players.p1.pos}
             IsT2={BelongsTo LOB Players.p2.pos}
@@ -697,9 +696,9 @@ in
 
    proc{Simultaneous Players M}
 
-      local UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 UpdateMap GetMap
+      local Winner UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 UpdateMap GetMap
 
-      proc{SimultaneousAux P M N} %N just tell wich player is running this proc
+      proc{SimultaneousAux P M N Winner} %N just tell wich player is running this proc
          {Time.delay {Rand Input.thinkMin Input.thinkMax}}
          local B W IDx Actionx PosP Paux Score in 
          B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M} 
@@ -720,7 +719,7 @@ in
                      {UpdateMap Maux}
                   end 
                end  
-            {SimultaneousAux Paux M N}
+            {SimultaneousAux Paux M N Winner}
          else 
             Paux = P
             thread 
@@ -733,6 +732,11 @@ in
                         {Send Players.p1.port gotHit(A B)}
                         case B of death(NewLife) then 
                            {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
+                           if NewLife == 0 then 
+                              {Send BoardPort displayWinner(P.id)}
+                              {Time.delay 100}
+                              {Application.exit 0}
+                           end 
                         end 
                      end 
                      {Send BoardPort hidePlayer(Players.p1.id)}
@@ -747,6 +751,11 @@ in
                         {Send Players.p2.port gotHit(A B)}
                         case B of death(NewLife) then
                            {Send BoardPort lifeUpdate(Players.p2.id NewLife)}
+                           if NewLife == 0 then 
+                              {Send BoardPort displayWinner(P.id)}
+                              {Time.delay 100}
+                              {Application.exit 0}
+                           end 
                         end 
                      end
                      {Send BoardPort hidePlayer(Players.p2.id)}
@@ -758,7 +767,7 @@ in
                   end 
                end
             end 
-            {SimultaneousAux Paux M N}
+            {SimultaneousAux Paux M N Winner}
          end 
          end 
       end 
@@ -772,12 +781,12 @@ in
       }
 
       thread 
-         {SimultaneousAux Players.p1 M 1}
+         {SimultaneousAux Players.p1 M 1 Winner}
       end 
 
       thread 
-         {SimultaneousAux Players.p2 M 2}
-      end 
+         {SimultaneousAux Players.p2 M 2 Winner}
+      end
       end 
    end 
 
