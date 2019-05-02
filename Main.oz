@@ -594,14 +594,24 @@ in
       proc{SimultaneousAux P M N} %N just tell wich player is running this proc
          {Time.delay {Rand Input.thinkMin Input.thinkMax}}
          local B W IDx Actionx PosP Paux in 
-            B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M}
-            if B == nil then 
+         B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M}
+         if B == nil then 
                Paux=player(port:P.port pos:PosP life:P.life id:P.id spawn:P.spawn)
-            if N==1 then 
-               {UpdatePosP1 PosP}
-            else
-               {UpdatePosP2 PosP}
-            end 
+               if N==1 then 
+                  {UpdatePosP1 PosP}
+                  %CHECK POS AND UPDATEMAP
+                  local Maux in 
+                     Maux={CheckPos M PosP P.id P.port}
+                     {UpdateMap Maux}
+                  end 
+               else
+                  {UpdatePosP2 PosP}
+                  %CHECK POS AND UPDATEMAP
+                  local Maux in 
+                     Maux={CheckPos M PosP P.id P.port}
+                     {UpdateMap Maux}
+                  end 
+               end  
             {SimultaneousAux Paux M N}
          else 
             Paux = P
@@ -674,6 +684,6 @@ in
 
    PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   {TurnByTurnAux PlayersDat Input.map}
-   %{Simultaneous PlayersDat Input.map}
+   %{TurnByTurnAux PlayersDat Input.map}
+   {Simultaneous PlayersDat Input.map}
 end
