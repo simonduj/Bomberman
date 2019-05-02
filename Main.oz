@@ -708,25 +708,26 @@ in
                   {UpdatePosP1 PosP}
                   %CHECK POS AND UPDATEMAP
                   local Maux in 
-                     Maux={CheckPos M PosP P.id P.port Score}
+                     Maux={CheckPos {GetMap} PosP P.id P.port Score}
                      {UpdateMap Maux}
                   end 
                else
                   {UpdatePosP2 PosP}
                   %CHECK POS AND UPDATEMAP
                   local Maux in 
-                     Maux={CheckPos M PosP P.id P.port Score}
+                     Maux={CheckPos {GetMap} PosP P.id P.port Score}
                      {UpdateMap Maux}
                   end 
                end  
-            {SimultaneousAux Paux M N Winner}
+            {SimultaneousAux Paux {GetMap} N Winner}
          else 
             Paux = P
             thread 
                local L in 
                   {Time.delay {Rand Input.timingBombMin Input.timingBombMax}}
                   %HANDLE BOMB EXPLODING 
-                  L={FireProp M B.pos P.port}
+                  L={FireProp {GetMap} B.pos P.port}
+                  {UpdateMap {BoxToRemove M L}}
                   if {BelongsTo L {GetPosP1}} then 
                      local A B in 
                         {Send Players.p1.port gotHit(A B)}
@@ -734,8 +735,8 @@ in
                            {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
                            if NewLife == 0 then 
                               {Send BoardPort displayWinner(P.id)}
-                              {Time.delay 100}
-                              {Application.exit 0}
+                              {Time.delay 1000}
+                              Winner=unit
                            end 
                         end 
                      end 
@@ -753,8 +754,8 @@ in
                            {Send BoardPort lifeUpdate(Players.p2.id NewLife)}
                            if NewLife == 0 then 
                               {Send BoardPort displayWinner(P.id)}
-                              {Time.delay 100}
-                              {Application.exit 0}
+                              {Time.delay 1000}
+                              Winner=unit
                            end 
                         end 
                      end
@@ -787,6 +788,9 @@ in
       thread 
          {SimultaneousAux Players.p2 M 2 Winner}
       end
+
+      {Wait Winner}
+      {Application.exit 0}
       end 
    end 
 
