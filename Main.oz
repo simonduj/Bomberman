@@ -664,7 +664,6 @@ in
       }
 
       thread 
-
          {SimultaneousAux Players.p1 M 1}
       end 
 
@@ -684,6 +683,9 @@ in
 
    PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   %{TurnByTurnAux PlayersDat Input.map}
-   {Simultaneous PlayersDat Input.map}
+   if Input.isTurnByTurn == true then 
+      {TurnByTurnAux PlayersDat Input.map}
+   else
+      {Simultaneous PlayersDat Input.map}
+   end 
 end
