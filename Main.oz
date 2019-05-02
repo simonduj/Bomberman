@@ -13,6 +13,10 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   GetWinner
+   InitGameBis
+   UpdateMapBis
+   BoxToRemove
    CountBoxesAux
    CountBoxes
    NewManager
@@ -95,6 +99,13 @@ in
       end 
    end 
 
+   fun{GetWinner Players}
+      if Players.p1.score > Players.p2.score then 
+         Players.p1
+      else 
+         Players.p2
+      end 
+   end
    fun{Rand Min Max}
       ({OS.rand} mod (Max - Min +1)) + Min
    end 
@@ -196,7 +207,31 @@ in
          end
       end
    end
+
+   fun{UpdateMapBis Xbis X Y N}
+      if X==1 then
+         if Xbis.2==nil then {CopyListEx Xbis.1 Y N}|nil
+         else {CopyListEx Xbis.1 Y N}|{UpdateMapBis Xbis.2 0 Y N}
+         end
+      else
+         if Xbis.2==nil then Xbis
+         else {CopyList Xbis.1}|{UpdateMapBis Xbis.2 X-1 Y N}
+         end 
+      end
+   end
    
+   fun{BoxToRemove M LOB}
+      if LOB == nil then M
+      else
+         if {GetValue M LOB.1.y LOB.1.x} == 2 then
+            {BoxToRemove {UpdateMapBis M LOB.1.y LOB.1.x 5} LOB.2}
+         elseif {GetValue M LOB.1.y LOB.1.x} == 3 then
+            {BoxToRemove {UpdateMapBis M LOB.1.y LOB.1.x 6} LOB.2}
+         else
+            {BoxToRemove M LOB.2}
+         end
+      end
+   end
    
    fun{ExplodeBombs M Mor L}
       if M.2 == nil then {ExplodeBombsAux M.1 Mor L}
@@ -290,25 +325,25 @@ in
       else Ybis.1|{CopyList Ybis.2}
       end   
    end
-   %Return the same list but replace (Y) by 0
-   fun{CopyListEx Ybis Y}
+   %Return the same list but replace (Y) by N
+   fun{CopyListEx Ybis Y N}
       if Y==1 then
          if Ybis ==nil then nil
          else
-            0|{CopyListEx Ybis.2 0}
+            N|{CopyListEx Ybis.2 0 N}
          end
       else
          if Ybis == nil then nil
          else
-            Ybis.1|{CopyListEx Ybis.2 Y-1}
+            Ybis.1|{CopyListEx Ybis.2 Y-1 N}
          end
       end
    end
    %Return the same map but replace (X,Y) by 0
    fun{UpdateMap Xbis X Y}
       if X==1 then
-         if Xbis.2==nil then {CopyListEx Xbis.1 Y}|nil
-         else {CopyListEx Xbis.1 Y}|{UpdateMap Xbis.2 0 Y}
+         if Xbis.2==nil then {CopyListEx Xbis.1 Y 0}|nil
+         else {CopyListEx Xbis.1 Y 0}|{UpdateMap Xbis.2 0 Y}
          end
       else
          if Xbis.2==nil then Xbis
@@ -353,28 +388,31 @@ in
       else pt(x:Pos.x-1 y:Pos.y)
       end 
    end 
-   fun{CheckPos M Pos ID P}
+   fun{CheckPos M Pos ID P Score}
       %HOW TO NOT COUNT MORE THAN 1 TIME THE POINT/BONUS
       local R Mbis in
-      if {GetValue M Pos.y Pos.x} == 2 then
+      if {GetValue M Pos.y Pos.x} == 5 then
          {Send P add(point 1 R)}
          {Send BoardPort hidePoint(Pos)}
          {Send BoardPort scoreUpdate(ID R)}
+         Score=1
          Mbis={UpdateMap M Pos.y Pos.x}
          Mbis
-      elseif {GetValue M Pos.y Pos.x} == 3 then 
+      elseif {GetValue M Pos.y Pos.x} == 6 then 
          %DEAL WITH BONUS/BOMB
          if {BinaryRand}==0 then 
             {Send P add(bomb 1 R)}
             {Send BoardPort hideBonus(Pos)}
+            Score=0
          else
             {Send P add(point 10 R)}
             {Send BoardPort hideBonus(Pos)}
             {Send BoardPort scoreUpdate(ID R)}
+            Score=10
          end
          Mbis={UpdateMap M Pos.y Pos.x}
          Mbis
-      else M
+      else Score =0 M
       end 
       end
    end 
@@ -408,9 +446,44 @@ in
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
       %return a record with all infos about players 
+      players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2) score:0)
+              p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6) score:0))
+   end  
+
+   fun{InitGameBis}
+      %% Implement your controller here
+      Colors = Input.colorsBombers
+      NbPlayers = Input.nbBombers
+      %Grid = {GUI.buildWindow}
+      Players = Input.bombers
+
+
+
+      ID = bomber(id:1 color:Colors.1 name:'Antoine')
+      ID2 = bomber(id:2 color:red name:'Simon')
+
+      %We can deal with the random order here : PlayerPort = ID or ID2 randomly 
+      PlayerPort = {PlayerManager.playerGenerator {Nth Players 1} ID} 
+      Player2Port = {PlayerManager.playerGenerator {Nth Players 2} ID2}
+
+      %Creat the port for the board and init. of the board
+      BoardPort  = {GUI.portWindow}
+      {Send BoardPort buildWindow}
+      {Send BoardPort initPlayer(ID)}
+      {Send BoardPort initPlayer(ID2)}
+      {Send PlayerPort assignSpawn(pt(x:2 y:2))}
+      {Send Player2Port assignSpawn(pt(x:12 y:6))}
+      {Send PlayerPort spawn(T P)}
+      {Send Player2Port spawn(T2 P2)}
+      {Send Player2Port info(spawnPlayer(T P))}
+      {Send PlayerPort info(spawnPlayer(T2 P2))}
+      {Send BoardPort spawnPlayer(ID P)}
+      {Send BoardPort spawnPlayer(ID2 P2)}
+      %return a record with all infos about players 
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2))
               p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6)))
    end  
+
 
    fun{EndOfTheGame P}
       nil
@@ -461,13 +534,13 @@ in
             {Send PlayerPort info(boxRemoved({NextPos Pos D}))}
             {Send Player2Port info(boxRemoved({NextPos Pos D}))}
             {Send BoardPort spawnPoint({NextPos Pos D})}
-            nil
+            {NextPos Pos D}|nil
          elseif NEXT==3 then
             {Send BoardPort hideBox({NextPos Pos D})}
             {Send PlayerPort info(boxRemoved({NextPos Pos D}))}
             {Send Player2Port info(boxRemoved({NextPos Pos D}))}
             {Send BoardPort spawnBonus({NextPos Pos D})}
-            nil
+            {NextPos Pos D}|nil
          else 
             {Send BoardPort spawnFire({NextPos Pos D})}
             {NextPos Pos D}|{FirePropAux M {NextPos Pos D} D R-1}
@@ -501,14 +574,23 @@ in
 
    proc{TurnByTurnAux Players M} %N=number of boxes currently left
       {Time.delay 350} %Just to see the dynamic !!
-      local Mbis PosP PosP2  NewLife NewLife2 End Winner in
-         local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 LOB in
+      local Mbis PosP PosP2  NewLife NewLife2 End Winner ScoreP1 ScoreP2 in
+         local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 LOB Mup in
                     
-                      
+            {Browser.browse Players.p1.score}
+            {Browser.browse Players.p2.score}
             LOB={ExplodeBombs M M nil}
             IsT={BelongsTo LOB Players.p1.pos}
             IsT2={BelongsTo LOB Players.p2.pos}
+            Mup={BoxToRemove M LOB}
+            %IF THERE ARE NO BOXES LEFT => END OF THE GAME
+         if {CountBoxes Mup 0} < 1 then 
+            %Winner={GetWinner}
+            End=true
+            Winner={GetWinner Players}
+         else
 
+            
             %We hide the touched Players at the same time
             if IsT == true then
                local A B in 
@@ -537,10 +619,10 @@ in
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if NewLife == 0 then 
                End=true
-               Winner=Players.p2
+               Winner={GetWinner Players}
             elseif NewLife2 == 0 then 
                End=true 
-               Winner=Players.p1
+               Winner={GetWinner Players}
             else 
                End = false 
             end 
@@ -550,18 +632,19 @@ in
             %MAYBE WE WILL HAVE TO CHANGE THE ORDER FOR THE LOGIC OF THE VIEW 
             if IsT == true then 
                B1=nil
-               Maux=M
+               Maux=Mup
                local IDx Posx in 
                   {Send Players.p1.port spawn(IDx Posx)}
                   {Send BoardPort spawnPlayer(IDx Posx)}
                   PosP = Posx
                end 
+               ScoreP1=0
                %Do What hase to be done
             else
                local IDx Actionx in
                   B1={TurnByTurnAux2 Players.p1.port Players.p2.port IDx Actionx PosP M}
-                  W1={AddBomb B1 M}
-                  Maux={CheckPos W1 PosP Players.p1.id Players.p1.port}
+                  W1={AddBomb B1 Mup}
+                  Maux={CheckPos W1 PosP Players.p1.id Players.p1.port ScoreP1}
                end 
             end 
             {Time.delay 350}
@@ -573,16 +656,18 @@ in
                   {Send BoardPort spawnPlayer(IDx Posx)}
                   PosP2 = Posx
                end 
+               ScoreP2=0
                %Do What has to be done
             else     
                local IDx Actionx  in 
                   B2={TurnByTurnAux2 Players.p2.port Players.p1.port IDx Actionx PosP2 Maux}
                   W2={AddBomb B2 Maux}
-                  Mbis={CheckPos W2 PosP2 Players.p2.id Players.p2.port}
+                  Mbis={CheckPos W2 PosP2 Players.p2.id Players.p2.port ScoreP2}
                end 
             end 
 
             end %CLOSE the "if End == false then ... END"
+         end 
 
          end
 
@@ -592,13 +677,15 @@ in
                         pos:PosP 
                         life:NewLife 
                         id:Players.p1.id 
-                        spawn:Players.p1.spawn)
+                        spawn:Players.p1.spawn
+                        score:Players.p1.score + ScoreP1)
 
                     p2:player(port:Players.p2.port 
                         pos:PosP2 
                         life:NewLife2 
                         id:Players.p2.id 
-                        spawn:Players.p2.spawn))
+                        spawn:Players.p2.spawn
+                        score:Players.p2.score + ScoreP2))
 
             {DecrBombs Mbis}}%We permute P2 and P in the recursive call to have the TurnByTurn
          else 
@@ -614,22 +701,22 @@ in
 
       proc{SimultaneousAux P M N} %N just tell wich player is running this proc
          {Time.delay {Rand Input.thinkMin Input.thinkMax}}
-         local B W IDx Actionx PosP Paux in 
-         B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M}
+         local B W IDx Actionx PosP Paux Score in 
+         B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M} 
          if B == nil then 
                Paux=player(port:P.port pos:PosP life:P.life id:P.id spawn:P.spawn)
                if N==1 then 
                   {UpdatePosP1 PosP}
                   %CHECK POS AND UPDATEMAP
                   local Maux in 
-                     Maux={CheckPos M PosP P.id P.port}
+                     Maux={CheckPos M PosP P.id P.port Score}
                      {UpdateMap Maux}
                   end 
                else
                   {UpdatePosP2 PosP}
                   %CHECK POS AND UPDATEMAP
                   local Maux in 
-                     Maux={CheckPos M PosP P.id P.port}
+                     Maux={CheckPos M PosP P.id P.port Score}
                      {UpdateMap Maux}
                   end 
                end  
@@ -702,12 +789,12 @@ in
 
 
 
-   PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   {Browser.browse {CountBoxes Input.map 0}}
    if Input.isTurnByTurn == true then 
+      PlayersDat={InitGame}
       {TurnByTurnAux PlayersDat Input.map}
    else
+      PlayersDat={InitGameBis}
       {Simultaneous PlayersDat Input.map}
    end 
 end
