@@ -13,6 +13,7 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   NewManager
    SimultaneousAux
    Rand
    Winner  
@@ -130,7 +131,51 @@ in
       end
    end
 
-
+   %Manager for the Simultaneous mode
+   proc{NewManager PP1 PP2 M UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 UpdateMap GetMap}
+      PosP1={NewCell PP1}
+      PosP2={NewCell PP2}
+      Map={NewCell M}
+      %The lock
+      PosP1Lock={NewLock}
+      PosP2Lock={NewLock}
+      MapLock={NewLock}
+      %PosP1 SET/GET
+   in
+      proc{UpdatePosP1 P}
+         lock PosP1Lock then
+            PosP1:=P
+         end
+      end
+      fun{GetPosP1}
+         lock PosP1Lock then
+            @PosP1
+         end
+      end
+      %PosP2 SET/GET
+      proc{UpdatePosP2 P}
+         lock PosP2Lock then
+            PosP2:=P
+         end
+      end
+      fun{GetPosP2}
+         lock PosP2Lock then
+            @PosP2
+         end
+      end
+      %Map SET/GET
+      proc{UpdateMap M}
+         lock MapLock then
+            Map:=M
+         end
+      end
+      fun{GetMap}
+         lock MapLock then
+            @Map
+         end
+      end
+   end
+   
    
    fun{ExplodeBombs M Mor L}
       if M.2 == nil then {ExplodeBombsAux M.1 Mor L}
@@ -542,37 +587,81 @@ in
       end
    end
 
-   proc{SimultaneousAux P M}
-      {Time.delay {Rand Input.thinkMin Input.thinkMax}}
-      local B W IDx Actionx PosP Paux in 
-         B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M}
-         if B == nil then 
-            Paux=player(port:P.port pos:PosP life:P.life id:P.id spawn:P.spawn)
-            {SimultaneousAux Paux M}
+   proc{Simultaneous Players M}
+
+      local UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 UpdateMap GetMap
+
+      proc{SimultaneousAux P M N} %N just tell wich player is running this proc
+         {Time.delay {Rand Input.thinkMin Input.thinkMax}}
+         local B W IDx Actionx PosP Paux in 
+            B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M}
+            if B == nil then 
+               Paux=player(port:P.port pos:PosP life:P.life id:P.id spawn:P.spawn)
+            if N==1 then 
+               {UpdatePosP1 PosP}
+            else
+               {UpdatePosP2 PosP}
+            end 
+            {SimultaneousAux Paux M N}
          else 
             Paux = P
             thread 
                local L in 
-               {Time.delay {Rand Input.timingBombMin Input.timingBombMax}}
-               %HANDLE BOMB EXPLODING 
-               L={FireProp M B.pos P.port}
+                  {Time.delay {Rand Input.timingBombMin Input.timingBombMax}}
+                  %HANDLE BOMB EXPLODING 
+                  L={FireProp M B.pos P.port}
+                  if {BelongsTo L {GetPosP1}} then 
+                     local A B in 
+                        {Send Players.p1.port gotHit(A B)}
+                        case B of death(NewLife) then 
+                           {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
+                        end 
+                     end 
+                     {Send BoardPort hidePlayer(Players.p1.id)}
+                     local IDx Posx in
+                        {Send Players.p1.port spawn(IDx Posx)}
+                        {Send BoardPort spawnPlayer(IDx Posx)}
+                     end
+                     %LIFE UPDATE EVERYWHEEEEERE
+                  end
+                  if {BelongsTo L {GetPosP2}} then 
+                     local A B in 
+                        {Send Players.p2.port gotHit(A B)}
+                        case B of death(NewLife) then
+                           {Send BoardPort lifeUpdate(Players.p2.id NewLife)}
+                        end 
+                     end
+                     {Send BoardPort hidePlayer(Players.p2.id)}
+                     local IDx Posx in 
+                        {Send Players.p2.port spawn(IDx Posx)}
+                        {Send BoardPort spawnPlayer(IDx Posx)}
+                     end 
+                     %LIFE UPDATE EVERYWHEEEEERE
+                  end 
                end
             end 
-            {SimultaneousAux Paux M}
-         end   
+            {SimultaneousAux Paux M N}
+         end 
+         end 
       end 
-   end 
 
-   proc{Simultaneous Players M}
+      in 
+
+      {NewManager Players.p1.spawn Players.p2.spawn M
+         UpdatePosP1 GetPosP1
+         UpdatePosP2 GetPosP2
+         UpdateMap GetMap
+      }
 
       thread 
-         {SimultaneousAux Players.p1 M}
+
+         {SimultaneousAux Players.p1 M 1}
       end 
 
       thread 
-         {SimultaneousAux Players.p2 M}
+         {SimultaneousAux Players.p2 M 2}
       end 
-
+      end 
    end 
 
 
@@ -585,6 +674,6 @@ in
 
    PlayersDat={InitGame}
    {Time.delay 1500} %Waiting for the board to be full screened
-   %{TurnByTurnAux PlayersDat Input.map}
-   {Simultaneous PlayersDat Input.map}
+   {TurnByTurnAux PlayersDat Input.map}
+   %{Simultaneous PlayersDat Input.map}
 end
