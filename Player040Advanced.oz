@@ -33,7 +33,9 @@ define
    DoMove
    ReadMap
    Binary
-
+   AvoidBombs
+   MoveAvoid
+   NoBombsNear
 in
    fun{NextPos Pos D}
       if D==0 then pt(x:Pos.x y:Pos.y+1)
@@ -74,6 +76,33 @@ in
       {Nth {Nth L Pos.x} Pos.y}
    end 
 
+   fun {NoBombsNear Pos State}
+      local Bombs IsPlayerNear in
+         Bombs = State.bombsOnTerrain
+         fun {IsPlayerNear Bomb}
+            case Bomb of nil then false
+            []H|T then
+               if {Or {And {Number.abs State.pos.x-H.pos.x}<Input.fire+1 {Number.abs State.pos.x-H.pos.x}==0} {And {Number.abs State.pos.y-H.pos.y}<Input.fire+1 {Number.abs State.pos.y-H.pos.y}==0}} then true
+               else {IsPlayerNear T} 
+               end
+            end
+         end
+
+         {IsPlayerNear Bombs}
+      end
+
+   end
+
+   fun{MoveAvoid State}
+      local Val Pos in
+         Val = {Random}
+         if {And {CheckCanMove {NextPos State.po Val}}==true {NoBombsNear {NextPos State.pos Val} State}==true} then
+            Pos = {NextPos State.pos Val}
+         else Pos = {MoveAvoid State}
+         end
+         Pos
+      end
+   end
 
    /*
    @Pre: Prend une position en argument
@@ -205,7 +234,7 @@ in
 
    fun {DoAction State ID Action}
    local A NewState Pos in
-      Pos = {RandomMove State.pos}
+      Pos = {MoveAvoid State}
       if {IsOff State} then
          ID = null
          Action = null
