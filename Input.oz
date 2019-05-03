@@ -29,7 +29,7 @@ in
 
 %%%% Style of game %%%%
    
-   IsTurnByTurn = true
+   IsTurnByTurn = false
    UseExtention = false
    PrintOK = true
 
@@ -50,10 +50,10 @@ in
    Map = [ %Map for tests
      [1 1 1 1 1 1 1 1 1 1 1 1 1]
      [1 4 0 2 0 0 0 0 0 0 0 4 1]
-     [1 0 0 0 0 0 0 0 3 0 0 0 1]
-     [1 2 0 0 0 0 2 0 0 0 0 0 1]
-     [1 0 0 0 0 0 0 0 0 3 0 0 1]
-     [1 4 0 0 3 0 0 0 0 0 0 4 1]
+     [1 0 0 0 0 0 0 0 0 0 0 0 1]
+     [1 2 0 0 0 0 0 0 0 0 0 0 1]
+     [1 0 0 0 0 0 0 0 0 0 0 0 1]
+     [1 4 0 0 0 0 0 0 0 0 0 4 1]
      [1 1 1 1 1 1 1 1 1 1 1 1 1]]
 
    %Map = [ %Empty map2 to test some stuffes
@@ -69,7 +69,7 @@ in
 %%%% Players description %%%%
 
    NbBombers = 2
-   Bombers = [player000asag player000bomber]
+   Bombers = [player000bomber player008Survivor]
    ColorBombers = [yellow red]
 
 %%%% Parameters %%%%

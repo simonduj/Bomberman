@@ -20,25 +20,25 @@ cleanMain :
 	rm Main.ozf
 
 Input.ozf : 
-	$(ozc) -c Input.oz
+	ozc -c Input.oz
 
 PlayerManager.ozf : 
-	$(ozc) -c PlayerManager.oz
+	ozc -c PlayerManager.oz
 
 Players.ozf : 
-	$(ozc) -c Player000name.oz
-	$(ozc) -c Player040Advanced.oz
+	ozc -c Player000name.oz
+	ozc -c Player040Advanced.oz
 
 
 
 GUI.ozf : 
-	$(ozc) -c GUI.oz 
+	ozc -c GUI.oz 
 
 Main.ozf : 
-	$(ozc) -c Main.oz
+	ozc -c Main.oz
 
 run : 
-	$(ozengine) Main.ozf
+	ozengine Main.ozf
 
 else
 

@@ -14,6 +14,7 @@ export
    initGame:InitGame
    getValue:GetValue
 define
+   GetWinnerBis
    GetWinner
    InitGameBis
    UpdateMapBis
@@ -162,6 +163,13 @@ in
             {BelongsTo L.2 P}
          end 
       end
+   end
+
+   fun{GetWinnerBis Players ScoreP1 ScoreP2}
+      if ScoreP1 > ScoreP2 then Players.p1
+      else 
+         Players.p2
+      end 
    end
 
    %Manager for the Simultaneous mode
@@ -764,7 +772,8 @@ in
                   L={FireProp {GetMap} B.pos P.port}
                   {UpdateMap {BoxToRemove M L}}
                   if {CountBoxes {GetMap} 0} < 1 then 
-                     Winner=unit
+                     {Send BoardPort displayWinner({GetWinnerBis Players {GetScoreP1} {GetScoreP2}}.id)}
+                     {Time.delay 1000}
                      {Application.exit 0}
                   end 
                   if {BelongsTo L {GetPosP1}} then 
@@ -773,9 +782,8 @@ in
                         case B of death(NewLife) then 
                            {Send BoardPort lifeUpdate(Players.p1.id NewLife)}
                            if NewLife == 0 then 
-                              {Send BoardPort displayWinner(P.id)}
+                              {Send BoardPort displayWinner({GetWinnerBis Players {GetScoreP1} {GetScoreP2}}.id)}
                               {Time.delay 1000}
-                              Winner=unit
                               {Application.exit 0}
                            end 
                         end 
@@ -793,9 +801,8 @@ in
                         case B of death(NewLife) then
                            {Send BoardPort lifeUpdate(Players.p2.id NewLife)}
                            if NewLife == 0 then 
-                              {Send BoardPort displayWinner(P.id)}
+                              {Send BoardPort displayWinner({GetWinnerBis Players {GetScoreP1} {GetScoreP2}}.id)}
                               {Time.delay 1000}
-                              Winner=unit
                               {Application.exit 0}
                            end 
                         end 
