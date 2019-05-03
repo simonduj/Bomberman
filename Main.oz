@@ -748,10 +748,6 @@ in
                      {UpdateScoreP2 Score}
                   end 
                end  
-            {Browser.browse 'ScoreP1'}
-            {Browser.browse {GetScoreP1}}
-            {Browser.browse 'ScoreP2'}
-            {Browser.browse {GetScoreP2}}
             {SimultaneousAux Paux {GetMap} N Winner}
          else 
             Paux = P
