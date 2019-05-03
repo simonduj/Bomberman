@@ -165,14 +165,19 @@ in
    end
 
    %Manager for the Simultaneous mode
-   proc{NewManager PP1 PP2 M UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 UpdateMap GetMap}
+   proc{NewManager PP1 PP2 M UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 
+      UpdateMap GetMap UpdateScoreP1 GetScoreP1 UpdateScoreP2 GetScoreP2}
       PosP1={NewCell PP1}
       PosP2={NewCell PP2}
       Map={NewCell M}
+      ScoreP1={NewCell 0}
+      ScoreP2={NewCell 0}
       %The lock
       PosP1Lock={NewLock}
       PosP2Lock={NewLock}
       MapLock={NewLock}
+      ScoreP1Lock={NewLock}
+      ScoreP2Lock={NewLock}
       %PosP1 SET/GET
    in
       proc{UpdatePosP1 P}
@@ -196,6 +201,27 @@ in
             @PosP2
          end
       end
+      %Score GET/SET
+      proc{UpdateScoreP1 P}
+         lock ScoreP1Lock then 
+            ScoreP1:=@ScoreP1+P
+         end 
+      end 
+      fun{GetScoreP1}
+         lock ScoreP1Lock then 
+            @ScoreP1
+         end 
+      end 
+      proc{UpdateScoreP2 P}
+         lock ScoreP2Lock then 
+            ScoreP2:=@ScoreP2+P
+         end 
+      end 
+      fun{GetScoreP2}
+         lock ScoreP2Lock then 
+            @ScoreP2
+         end 
+      end 
       %Map SET/GET
       proc{UpdateMap M}
          lock MapLock then
@@ -567,7 +593,7 @@ in
             {Send P info(bombPlanted(Pos))}
             PosP=Pos
 
-            bomb(pos:Pos player:P time:Input.fire*2)
+            bomb(pos:Pos player:P time:Input.fire+1)
          else 
          nil
       end
@@ -697,6 +723,7 @@ in
    proc{Simultaneous Players M}
 
       local Winner UpdatePosP1 GetPosP1 UpdatePosP2 GetPosP2 UpdateMap GetMap
+      UpdateScoreP1 GetScoreP1 UpdateScoreP2 GetScoreP2
 
       proc{SimultaneousAux P M N Winner} %N just tell wich player is running this proc
          {Time.delay {Rand Input.thinkMin Input.thinkMax}}
@@ -709,6 +736,7 @@ in
                   %CHECK POS AND UPDATEMAP
                   local Maux in 
                      Maux={CheckPos {GetMap} PosP P.id P.port Score}
+                     {UpdateScoreP1 Score}
                      {UpdateMap Maux}
                   end 
                else
@@ -717,8 +745,13 @@ in
                   local Maux in 
                      Maux={CheckPos {GetMap} PosP P.id P.port Score}
                      {UpdateMap Maux}
+                     {UpdateScoreP2 Score}
                   end 
                end  
+            {Browser.browse 'ScoreP1'}
+            {Browser.browse {GetScoreP1}}
+            {Browser.browse 'ScoreP2'}
+            {Browser.browse {GetScoreP2}}
             {SimultaneousAux Paux {GetMap} N Winner}
          else 
             Paux = P
@@ -728,6 +761,10 @@ in
                   %HANDLE BOMB EXPLODING 
                   L={FireProp {GetMap} B.pos P.port}
                   {UpdateMap {BoxToRemove M L}}
+                  if {CountBoxes {GetMap} 0} < 1 then 
+                     Winner=unit
+                     {Application.exit 0}
+                  end 
                   if {BelongsTo L {GetPosP1}} then 
                      local A B in 
                         {Send Players.p1.port gotHit(A B)}
@@ -737,6 +774,7 @@ in
                               {Send BoardPort displayWinner(P.id)}
                               {Time.delay 1000}
                               Winner=unit
+                              {Application.exit 0}
                            end 
                         end 
                      end 
@@ -756,6 +794,7 @@ in
                               {Send BoardPort displayWinner(P.id)}
                               {Time.delay 1000}
                               Winner=unit
+                              {Application.exit 0}
                            end 
                         end 
                      end
@@ -779,6 +818,8 @@ in
          UpdatePosP1 GetPosP1
          UpdatePosP2 GetPosP2
          UpdateMap GetMap
+         UpdateScoreP1 GetScoreP1 
+         UpdateScoreP2 GetScoreP2
       }
 
       thread 
@@ -790,7 +831,6 @@ in
       end
 
       {Wait Winner}
-      {Application.exit 0}
       end 
    end 
 
