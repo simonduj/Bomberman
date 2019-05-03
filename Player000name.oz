@@ -33,6 +33,7 @@ define
    DoMove
    ReadMap
    Binary
+
 in
    fun{NextPos Pos D}
       if D==0 then pt(x:Pos.x y:Pos.y+1)
@@ -72,6 +73,7 @@ in
    fun{GetValue L Pos}
       {Nth {Nth L Pos.x} Pos.y}
    end 
+
 
    /*
    @Pre: Prend une position en argument
@@ -174,8 +176,7 @@ in
    */
 
    fun {AssignSpawn Pos State}
-      State.spawnpos = Pos
-      State
+      state(id:State.id spawned:State.spawned dead:State.dead spawnpos:Pos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
    end
 
    /*
@@ -184,16 +185,17 @@ in
    */
 
    fun {Spawn State ID Pos}
-      if {Or State.spawned==true State.nbLives<1} then
+   local NewState in
+      if {Or State.spawned==true State.lives<1} then
          ID = null
          Pos = null
       else
          ID = State.id
          Pos = State.spawnpos
-         State.spawned = true
-         State.pos = Pos
+         NewState = state(id:State.id spawned:true dead:false spawnpos:State.spawnpos pos:Pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+         NewState
       end
-      State
+   end
    end
 
    /*
@@ -202,63 +204,69 @@ in
    */
 
    fun {DoAction State ID Action}
-   local A in
+   local A NewState Pos in
+      Pos = {RandomMove State.pos}
       if {IsOff State} then
          ID = null
          Action = null
       else
          A = {Binary}
          if A == 0 then
-            RandomNewPos = {RandomMove State.pos}
-               {DoMove State RandomNewPos}
-               ID = State.id
-               Action = move(RandomNewPos)
+            NewState = {DoMove State Pos}
+            ID = State.id
+            Action = move(Pos)
          else 
             if State.nbBombLeft > 0 then
                   ID = State.id
-                  State.nbBombLeft = State.nbBombLeft - 1
-                  State.nbBombPlaced = State.nbBombPlaced + 1
-            else RandomNewPos = {RandomMove State.pos}
+                  NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced+1 nbBombLeft:State.nbBombLeft-1 shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+                  Action = bomb(State.pos)
+            else
+               ID = State.id
+               Action = move(Pos)
             end
          end
       end 
-      State
+      NewState
    end
    end
 
-   proc{DoMove State Pos}
-      State.pos = Pos
+   fun{DoMove State Pos}
+   local NewState in
+      NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:Pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+      NewState
+   end
    end
 
    fun {Add State Type Option Result}
+   local NewState in
       case Type of bomb then
          if {Int.isNat Option} == true then
-            State.nbBombLeft = State.nbBombLeft + Option
-            Result = State.nbBombLeft
+            NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft+Option shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+            Result = NewState.nbBombLeft
          else
             Result = null
             raise unknownOption('Option not recognized by the Player '#Option) end
          end
       []point then
          if {Int.isNat Option} == true then
-            State.point = State.point + Option
-            Result = State.point
+            NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point+Option lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+            Result = NewState.point
          else
             Result = null
             raise unknownOption('Option not recognized by the Player '#Option) end
          end
       []shield then
          if {Int.isNat Option} == true then
-            State.shield = State.shield + Option
-            Result = State.shield
+            NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield+Option otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+            Result = NewState.shield
          else
             Result = null
             raise unknownOption('Option not recognized by the Player '#Option) end
          end
       []life then
          if {Int.isNat Option} == true then
-            State.lives = State.lives + Option
-            Result = State.lives
+            NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives+Option livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+            Result = NewState.lives
          else
             Result = nil
             raise unknownOption('Option not recognized by the Player '#Option) end
@@ -266,7 +274,8 @@ in
       else
          raise unknownAdd('Add not recognised by the Player '#Type) end
       end
-      State
+      NewState
+   end
    end
 
    /*
@@ -275,67 +284,60 @@ in
    */
 
    fun {GotHit State ID Result}
+   local NewState in
       if {IsOff State} == true then
          ID = null
          Result = null
-      elseif State.shield > 0 then
-         ID = null
-         Result = null
-         State.shield = State.shield - 1
       else
          ID = State.id
-         State.lives = State.lives - 1
-         State.spawned = false
+         NewState = state(id:State.id spawned:false dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives-1 livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
          Result = death(State.lives)
       end
-      State 
+      NewState 
+   end
    end
 
    /*
    @Pre: Prend en argument un message
-   @Post: Le message est decode et l'etat est mis a jour accordément a celui ci
+   @Post: Le message est decode et l'etat est mis a jour accordement a celui ci
    */
 
    fun {Info State Message}
-      case Message 
-      of spawnPlayer(ID Pos) then
-         if ID == State.id then
-            State.spawnpos = Pos
-            State.spawned = true
-            State.dead = false
-         else
-            State.posOtherPlayer = Pos
-            State.stateotherplayer = true
-            State.otherPlayerAlive = true
-         end
-      []movePlayer(ID Pos) then
-         if ID == State.id then
-            State.pos = Pos
-         else State.posOtherPlayer = Pos
-         end
-      []deadPlayer(ID) then
-         if State.id == ID then
-            State.spawned = false
-            if State.lives == 1 then
-               State.dead = true
+      local NewState in
+         case Message 
+         of spawnPlayer(ID Pos) then
+            if ID == State.id then
+               NewState = state(id:State.id spawned:true dead:true spawnpos:Pos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
             else
-               State.lives = State.lives-1
+               NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:false stateotherplayer:true bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:Pos otherPlayerSpawnPos:Pos)
             end
-         else
-            State.stateotherplayer = false
-            if State.livesOtherPlayer == 1 then
-               State.otherPlayerDead = true
+         []movePlayer(ID Pos) then
+            if ID == State.id then
+               NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:Pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+            else NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:Pos otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+            end
+         []deadPlayer(ID) then
+            if State.id == ID then
+               if State.lives == 1 then
+                  NewState = state(id:State.id spawned:false dead:true spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives-1 livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+               else
+                  NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives-1 livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+               end
             else
-               State.livesOtherPlayer = State.livesOtherPlayer - 1
+               State.stateotherplayer = false
+               if State.livesOtherPlayer == 1 then
+                  NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer-1 nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:true stateotherplayer:false bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+               else
+                  NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer-1 nbBombPlaced:State.nbBombPlaced nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:State.bombsOnTerrain posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+               end
             end
+         []bombPlanted(Pos) then
+            NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced+1 nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:{List.append State.bombsOnTerrain Pos} posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
+         []bombExploded(Pos) then
+            NewState = state(id:State.id spawned:State.spawned dead:State.dead spawnpos:State.spawnpos pos:State.pos point:State.point lives:State.lives livesOtherPlayer:State.livesOtherPlayer nbBombPlaced:State.nbBombPlaced-1 nbBombLeft:State.nbBombLeft shield:State.shield otherPlayerDead:State.otherPlayerDead stateotherplayer:State.stateotherplayer bombsOnTerrain:{RemoveBombFromList State.bombsOnTerrain Pos} posOtherPlayer:State.posOtherPlayer otherPlayerSpawnPos:State.otherPlayerSpawnPos)
          end
-      []bombPlanted(Pos) then
-         {List.append State.bombsOnTerrain Pos}
-      []bombExploded(Pos) then
-         State.bombs = {RemoveBombFromList State.bombsOnTerrain Pos}
-
-     end
-      State
+      NewState
+      end
    end
 
    fun {StartPlayer ID}
@@ -346,8 +348,8 @@ in
       end
       Port = {NewPort Stream}
       thread
-      State = state(id:ID spawned:false dead:true spawnpos:nil pos:nil point:0 lives:Input.nbLives livesOtherPlayer:Input.nbLives nbBombPlaced:0 nbBombLeft:Input.nbBombs shield:0 bombs:nil otherPlayerDead:false stateotherplayer:false bombsOnTerrain:nil posOtherPlayer:nil)
-	 {TreatStream OutputStream State}
+      State = state(id:ID spawned:false dead:true spawnpos:nil pos:nil point:0 lives:Input.nbLives livesOtherPlayer:Input.nbLives nbBombPlaced:0 nbBombLeft:Input.nbBombs shield:0 otherPlayerDead:false stateotherplayer:false bombsOnTerrain:nil posOtherPlayer:nil otherPlayerSpawnPos:nil)
+    {TreatStream OutputStream State}
       end
       Port
    end
