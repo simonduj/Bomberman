@@ -473,8 +473,14 @@ in
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
       %return a record with all infos about players 
+      %the order of the player is randomly defined
+      if {BinaryRand} == 0 then
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2) score:0)
               p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6) score:0))
+      else 
+      players(p2: player(port:Player2Port pos:pt(x:12 y:6) life:Input.nbLives id:ID2 spawn:pt(x:12 y:6) score:0)
+              p1: player(port:PlayerPort pos:pt(x:2 y:2) life:Input.nbLives id:ID spawn:pt(x:2 y:2) score:0))
+      end 
    end  
 
    fun{InitGameBis}
