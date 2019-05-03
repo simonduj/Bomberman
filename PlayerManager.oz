@@ -1,5 +1,6 @@
 functor
 import
+   Player082advancedPlayer
    Player009random
    Player000bomber
    Player008Survivor
@@ -20,6 +21,7 @@ in
       [] player009random then {Player009random.portPlayer ID}
       [] player008Survivor then {Player008Survivor.portPlayer ID}
       [] player000asag then {Player000asag.portPlayer ID}
+      [] player082advancedPlayer then {Player082advancedPlayer.portPlayer ID}
       else
          raise 
             unknownedPlayer('Player not recognized by the PlayerManager '#Kind)
