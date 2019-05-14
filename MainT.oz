@@ -2,7 +2,7 @@ functor
 import
    OS
    GUI
-   InputS
+   InputT
    PlayerManager
    Browser
    Application
@@ -453,10 +453,10 @@ in
    end 
    fun{InitGame}
       %% Implement your controller here
-      Colors = InputS.colorsBombers
-      NbPlayers = InputS.nbBombers
+      Colors = InputT.colorsBombers
+      NbPlayers = InputT.nbBombers
       %Grid = {GUI.buildWindow}
-      Players = InputS.bombers
+      Players = InputT.bombers
 
 
 
@@ -483,20 +483,20 @@ in
       %return a record with all infos about players 
       %the order of the player is randomly defined
       if {BinaryRand} == 0 then
-      players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputS.nbLives id:ID spawn:pt(x:2 y:2) score:0)
-              p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputS.nbLives id:ID2 spawn:pt(x:12 y:6) score:0))
+      players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputT.nbLives id:ID spawn:pt(x:2 y:2) score:0)
+              p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6) score:0))
       else 
-      players(p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputS.nbLives id:ID2 spawn:pt(x:12 y:6) score:0)
-              p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputS.nbLives id:ID spawn:pt(x:2 y:2) score:0))
+      players(p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6) score:0)
+              p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputT.nbLives id:ID spawn:pt(x:2 y:2) score:0))
       end 
    end  
 
    fun{InitGameBis}
       %% Implement your controller here
-      Colors = InputS.colorsBombers
-      NbPlayers = InputS.nbBombers
+      Colors = InputT.colorsBombers
+      NbPlayers = InputT.nbBombers
       %Grid = {GUI.buildWindow}
-      Players = InputS.bombers
+      Players = InputT.bombers
 
 
 
@@ -521,8 +521,8 @@ in
       {Send BoardPort spawnPlayer(ID P)}
       {Send BoardPort spawnPlayer(ID2 P2)}
       %return a record with all infos about players 
-      players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputS.nbLives id:ID spawn:pt(x:2 y:2))
-              p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputS.nbLives id:ID2 spawn:pt(x:12 y:6)))
+      players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputT.nbLives id:ID spawn:pt(x:2 y:2))
+              p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6)))
    end  
 
 
@@ -546,10 +546,10 @@ in
       {Send Player2Port info(bombExploded(Pos))}
       {Send BoardPort spawnFire(Pos)} %first spawnFire where the bomb was dropped
       {Send P add(bomb 1 R)}
-      L1={FirePropAux M Pos 0 InputS.fire}
-      L2={FirePropAux M Pos 1 InputS.fire}
-      L3={FirePropAux M Pos 2 InputS.fire}
-      L4={FirePropAux M Pos 3 InputS.fire}
+      L1={FirePropAux M Pos 0 InputT.fire}
+      L2={FirePropAux M Pos 1 InputT.fire}
+      L3={FirePropAux M Pos 2 InputT.fire}
+      L4={FirePropAux M Pos 3 InputT.fire}
       LFINAL={List.append Pos|nil {List.append L1 {List.append L2 {List.append L3 L4}}}}
       {Time.delay 650}
       {HideFire LFINAL true}
@@ -607,14 +607,13 @@ in
             {Send P info(bombPlanted(Pos))}
             PosP=Pos
 
-            bomb(pos:Pos player:P time:InputS.fire+1)
+            bomb(pos:Pos player:P time:InputT.fire+1)
          else 
          nil
       end
    end 
 
    proc{TurnByTurnAux Players M} %N=number of boxes currently left
-      {Time.delay 350} %Just to see the dynamic !!
       local Mbis PosP PosP2  NewLife NewLife2 End Winner ScoreP1 ScoreP2 in
          local Action Action2 Maux B1 B2 IsT IsT2 W1 W2 LOB Mup in
                     
@@ -669,6 +668,7 @@ in
             if End == false then 
 
             %MAYBE WE WILL HAVE TO CHANGE THE ORDER FOR THE LOGIC OF THE VIEW 
+            {Time.delay 200}
             if IsT == true then 
                B1=nil
                Maux=Mup
@@ -686,7 +686,7 @@ in
                   Maux={CheckPos W1 PosP Players.p1.id Players.p1.port ScoreP1}
                end 
             end 
-            {Time.delay 350}
+            {Time.delay 200}
             if IsT2 == true then
                B2=nil
                Mbis=Maux
@@ -740,7 +740,7 @@ in
       UpdateScoreP1 GetScoreP1 UpdateScoreP2 GetScoreP2
 
       proc{SimultaneousAux P M N Winner} %N just tell wich player is running this proc
-         {Time.delay {Rand InputS.thinkMin InputS.thinkMax}}
+         {Time.delay {Rand InputT.thinkMin InputT.thinkMax}}
          local B W IDx Actionx PosP Paux Score in 
          B={TurnByTurnAux2 P.port P.port IDx Actionx PosP M} 
          if B == nil then 
@@ -767,7 +767,7 @@ in
             Paux = P
             thread 
                local L in 
-                  {Time.delay {Rand InputS.timingBombMin InputS.timingBombMax}}
+                  {Time.delay {Rand InputT.timingBombMin InputT.timingBombMax}}
                   %HANDLE BOMB EXPLODING 
                   L={FireProp {GetMap} B.pos P.port}
                   {UpdateMap {BoxToRemove M L}}
@@ -851,12 +851,12 @@ in
 
 
 
-   {Time.delay 1500} %Waiting for the board to be full screened
-   if InputS.isTurnByTurn == true then 
+   {Time.delay 700} %Waiting for the board to be full screened
+   if InputT.isTurnByTurn == true then 
       PlayersDat={InitGame}
-      {TurnByTurnAux PlayersDat InputS.map}
+      {TurnByTurnAux PlayersDat InputT.map}
    else
       PlayersDat={InitGameBis}
-      {Simultaneous PlayersDat InputS.map}
+      {Simultaneous PlayersDat InputT.map}
    end 
 end

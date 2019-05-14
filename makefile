@@ -7,11 +7,16 @@
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 
-all : Input.ozf PlayerManager.ozf GUI.ozf compilePlayers Main.ozf run
+all : Input.ozf PlayerManager.ozf GUI.ozf compilePlayers Main.ozf compileNew
 
 compilePlayers : PlayerManager.ozf Players.ozf GUI.ozf Main.ozf
 
 players : Players.ozf
+
+compileNew : 
+	ozc -c InputS.oz
+	ozc -c InputT.oz
+	ozc -c MainT.oz
 
 clean : 
 	rm GUI.ozf Input.ozf Main.ozf Player000name.ozf PlayerManager.ozf
@@ -29,6 +34,11 @@ Players.ozf :
 	ozc -c Player000name.oz
 	ozc -c Player040Advanced.oz
 
+test1 :
+	ozengine MainT.ozf
+
+test2: 
+	ozengine Main.ozf
 
 
 GUI.ozf : 
@@ -45,7 +55,13 @@ else
 ozc = /Applications/Mozart2.app/Contents/Resources/bin/ozc
 ozengine = /Applications/Mozart2.app/Contents/Resources/bin/ozengine
 
-all : Input.ozf PlayerManager.ozf GUI.ozf compilePlayers Main.ozf run
+all : Input.ozf PlayerManager.ozf GUI.ozf compilePlayers Main.ozf compileNew
+
+compileNew : 
+	$(ozc) -c InputT.oz
+	$(ozc) -c InputS.oz
+	$(ozc) -c MainT.oz
+
 
 compilePlayers : PlayerManager.ozf Players.ozf GUI.ozf Main.ozf
 
@@ -68,6 +84,11 @@ Players.ozf :
 	$(ozc) -c Player040Advanced.oz
 
 
+test1 :
+	$(ozengine) MainT.oz
+
+test2 :
+	$(ozengine) Main.oz 
 
 GUI.ozf : 
 	$(ozc) -c GUI.oz 
