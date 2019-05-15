@@ -473,7 +473,7 @@ in
       {Send BoardPort initPlayer(ID)}
       {Send BoardPort initPlayer(ID2)}
       {Send PlayerPort assignSpawn(pt(x:2 y:2))}
-      {Send Player2Port assignSpawn(pt(x:12 y:6))}
+      {Send Player2Port assignSpawn(pt(x:6 y:6))}
       {Send PlayerPort spawn(T P)}
       {Send Player2Port spawn(T2 P2)}
       {Send Player2Port info(spawnPlayer(T P))}
@@ -484,9 +484,9 @@ in
       %the order of the player is randomly defined
       if {BinaryRand} == 0 then
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputT.nbLives id:ID spawn:pt(x:2 y:2) score:0)
-              p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6) score:0))
+              p2: player(port:Player2Port pos:pt(x:6 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6) score:0))
       else 
-      players(p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6) score:0)
+      players(p2: player(port:Player2Port pos:pt(x:6 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6) score:0)
               p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputT.nbLives id:ID spawn:pt(x:2 y:2) score:0))
       end 
    end  
@@ -513,7 +513,7 @@ in
       {Send BoardPort initPlayer(ID)}
       {Send BoardPort initPlayer(ID2)}
       {Send PlayerPort assignSpawn(pt(x:2 y:2))}
-      {Send Player2Port assignSpawn(pt(x:12 y:6))}
+      {Send Player2Port assignSpawn(pt(x:6 y:6))}
       {Send PlayerPort spawn(T P)}
       {Send Player2Port spawn(T2 P2)}
       {Send Player2Port info(spawnPlayer(T P))}
@@ -522,7 +522,7 @@ in
       {Send BoardPort spawnPlayer(ID2 P2)}
       %return a record with all infos about players 
       players(p1: player(port:PlayerPort pos:pt(x:2 y:2) life:InputT.nbLives id:ID spawn:pt(x:2 y:2))
-              p2: player(port:Player2Port pos:pt(x:12 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6)))
+              p2: player(port:Player2Port pos:pt(x:6 y:6) life:InputT.nbLives id:ID2 spawn:pt(x:12 y:6)))
    end  
 
 
